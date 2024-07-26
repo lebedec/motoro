@@ -1,0 +1,11 @@
+[package]
+name = "motoro"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "A rendering engine based on Vulkan API"
+readme = "README.md"
+homepage = "https://github.com/lebedec/motoro"
+repository = "https://github.com/lebedec/motoro"
+
+[dependencies]
