@@ -1,0 +1,184 @@
+use std::collections::HashMap;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::{Arc, RwLock};
+use std::time::{Duration, Instant};
+use std::{fs, thread};
+
+use log::{debug, error, info};
+use mesura::GaugeValue;
+
+use crate::textures::{Texture, TextureError, TextureLoaderMetrics, TexturePrefabMetrics};
+
+pub trait TextureLoaderDevice: Clone + Send {
+    fn load_texture_from(&self, id: usize, data: &[u8]) -> Result<Texture, TextureError>;
+}
+
+pub struct TextureLoader {
+    requests: Receiver<String>,
+    requests_queue: Sender<String>,
+    loading: Receiver<(String, Texture)>,
+    loading_queue: Arc<RwLock<Vec<String>>>,
+    records: HashMap<String, Option<Texture>>,
+    pub default_texture: Texture,
+    pub rect_texture: Texture,
+    metrics: TexturePrefabMetrics,
+}
+
+impl TextureLoader {
+    pub fn new(
+        // default_texture: String,
+        // rect_texture: String,
+        // thread_instance: Instance,
+        // thread_device: Device,
+        // physical_device: PhysicalDevice,
+        // queues: QueueFamilyIndex,
+        device: impl TextureLoaderDevice + 'static,
+    ) -> Self {
+        info!("Creates texture loader");
+        // let thread_queue =
+        //     unsafe { thread_device.get_device_queue(queues.loading.family, queues.loading.queue) };
+        // let thread_command_pool =
+        //     unsafe { crate::vulkan::create_command_pool(&thread_device, queues.loading) };
+        // let default_texture = Texture::from_file(
+        //     0,
+        //     &default_texture,
+        //     &thread_instance,
+        //     &thread_device,
+        //     physical_device,
+        //     thread_queue,
+        //     thread_command_pool,
+        // )
+        // .expect("default texture must be loaded");
+        // let rect_texture = Texture::from_file(
+        //     1,
+        //     &rect_texture,
+        //     &thread_instance,
+        //     &thread_device,
+        //     physical_device,
+        //     thread_queue,
+        //     thread_command_pool,
+        // )
+        // .expect("rect texture must be loaded");
+        let default = include_bytes!("builtin/default.png");
+        let default = device
+            .load_texture_from(0, default)
+            .expect("default texture must be loaded");
+        let rect = include_bytes!("builtin/rect.png");
+        let rect = device
+            .load_texture_from(1, rect)
+            .expect("rect texture must be loaded");
+
+        let loading_queue = Arc::new(RwLock::new(Vec::<String>::new()));
+        let (requests_queue, requests) = channel();
+        let (responses_queue, responses) = channel();
+
+        for id in 0..1 {
+            // NOTE: to implement multiple loaders need to synchronize queue
+            let name = format!("texture-loader-{id}");
+            let thread_loading_queue = loading_queue.clone();
+            let thread_responses_queue = responses_queue.clone();
+            // let thread_instance = thread_instance.clone();
+            // let thread_device = thread_device.clone();
+            let thread_device = device.clone();
+            let loading = move || {
+                let mut texture_id = 2;
+                let mut metrics = TextureLoaderMetrics::new(id);
+                info!("Starts texture loader thread");
+                loop {
+                    let path = {
+                        // NOTE: minimize lock time
+                        thread_loading_queue
+                            .write()
+                            .expect("loading queue must be available")
+                            .pop()
+                    };
+                    if let Some(path) = path {
+                        debug!("Starts texture '{path}' loading");
+                        let time = Instant::now();
+                        // let texture = Texture::from_file(
+                        //     texture_id,
+                        //     &path,
+                        //     &thread_instance,
+                        //     &thread_device,
+                        //     physical_device,
+                        //     thread_queue,
+                        //     thread_command_pool,
+                        // );
+                        let texture = fs::read(&path)
+                            .map_err(TextureError::from)
+                            .and_then(|data| thread_device.load_texture_from(texture_id, &data));
+                        metrics.loading_time.add(time);
+                        match texture {
+                            Ok(texture) => {
+                                debug!("Loads texture '{path}'");
+                                texture_id += 1;
+                                thread_responses_queue
+                                    .send((path, texture))
+                                    .expect("response must be sent");
+                                metrics.loads.inc();
+                            }
+                            Err(error) => {
+                                error!("Unable to load texture '{path}', {error:?}");
+                                metrics.errors.inc();
+                            }
+                        }
+                    } else {
+                        thread::sleep(Duration::from_millis(250));
+                    }
+                }
+            };
+            thread::Builder::new()
+                .name(name.clone())
+                .spawn(loading)
+                .expect(&format!("{name} thread must be spawned"));
+        }
+        Self {
+            requests_queue,
+            requests,
+            loading: responses,
+            loading_queue,
+            records: HashMap::default(),
+            default_texture: default,
+            rect_texture: rect,
+            metrics: TexturePrefabMetrics::new(),
+        }
+    }
+
+    pub fn get_texture(&mut self, path: &str) -> Texture {
+        match self.records.get(path) {
+            None => {
+                self.metrics.requests.inc();
+                self.metrics.loadings.inc();
+                self.requests_queue
+                    .send(path.to_string())
+                    .expect("request must be sent");
+                self.default_texture
+            }
+            Some(record) => match record {
+                None => {
+                    self.metrics.loadings.inc();
+                    self.default_texture
+                }
+                Some(texture) => {
+                    self.metrics.uses.inc();
+                    *texture
+                }
+            },
+        }
+    }
+
+    pub fn update(&mut self) {
+        for request in self.requests.try_iter() {
+            if !self.records.contains_key(&request) {
+                self.records.insert(request.clone(), None);
+                self.loading_queue
+                    .write()
+                    .expect("loading queue must be available")
+                    .push(request);
+            }
+        }
+        for (path, texture) in self.loading.try_iter() {
+            self.records.insert(path, Some(texture));
+        }
+    }
+}
