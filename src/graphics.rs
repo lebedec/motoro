@@ -1,9 +1,10 @@
 use crate::input::poll_event;
 use crate::textures::TextureLoader;
 use crate::vulkan::Vulkan;
-use crate::{dpi, GraphicsConfig, GraphicsMode};
+use crate::{dpi, FontLoader, GraphicsConfig, GraphicsMode};
 use log::info;
 use sdl2::video::{FullscreenType, Window, WindowPos};
+use std::fs::create_dir_all;
 use vulkanalia::vk;
 
 /// Provides the context for the rendering graphics on screen.
@@ -11,6 +12,7 @@ pub struct Graphics {
     pub(crate) window: Window,
     pub(crate) vulkan: Vulkan,
     pub textures: TextureLoader,
+    pub fonts: FontLoader,
 }
 
 impl Graphics {
@@ -68,21 +70,21 @@ impl Graphics {
         } else {
             vk::PresentModeKHR::IMMEDIATE
         };
-        let present_mode = vk::PresentModeKHR::IMMEDIATE;
         let mut vulkan = unsafe { Vulkan::create(&window, present_mode) };
-        // info!("Configures prefabs");
+        info!("Configures asset loaders");
+        create_dir_all(&config.fonts.cache).expect("all cache sub directories must be created");
         let textures = vulkan.create_texture_loader_device();
         let textures = TextureLoader::new(textures);
-        // let sprites = SpritesRenderer::new(&mut vulkan, &fs);
-        // let tiles = TilesRenderer::new(&mut vulkan, &fs);
-        // let text = CanvasRenderer::new(&mut vulkan, &fs);
-        // let shapes = ShapesRenderer::new(&mut vulkan, &fs);
-        // let mut prefabs = Prefabs::new(textures, fs, camera.resolution_scale);
-        // prefabs.load_basic_prefabs();
+        let fonts_resolution_scale = match config.fonts.resolution_reference {
+            None => 1.0,
+            Some([_, height]) => drawable.1 as f32 / height as f32,
+        };
+        let fonts = FontLoader::new(&config.fonts.cache, fonts_resolution_scale);
         Self {
             window,
             vulkan,
             textures,
+            fonts,
         }
     }
 

@@ -25,40 +25,8 @@ pub struct TextureLoader {
 }
 
 impl TextureLoader {
-    pub fn new(
-        // default_texture: String,
-        // rect_texture: String,
-        // thread_instance: Instance,
-        // thread_device: Device,
-        // physical_device: PhysicalDevice,
-        // queues: QueueFamilyIndex,
-        device: impl TextureLoaderDevice + 'static,
-    ) -> Self {
+    pub fn new(device: impl TextureLoaderDevice + 'static) -> Self {
         info!("Creates texture loader");
-        // let thread_queue =
-        //     unsafe { thread_device.get_device_queue(queues.loading.family, queues.loading.queue) };
-        // let thread_command_pool =
-        //     unsafe { crate::vulkan::create_command_pool(&thread_device, queues.loading) };
-        // let default_texture = Texture::from_file(
-        //     0,
-        //     &default_texture,
-        //     &thread_instance,
-        //     &thread_device,
-        //     physical_device,
-        //     thread_queue,
-        //     thread_command_pool,
-        // )
-        // .expect("default texture must be loaded");
-        // let rect_texture = Texture::from_file(
-        //     1,
-        //     &rect_texture,
-        //     &thread_instance,
-        //     &thread_device,
-        //     physical_device,
-        //     thread_queue,
-        //     thread_command_pool,
-        // )
-        // .expect("rect texture must be loaded");
         let default = include_bytes!("builtin/default.png");
         let default = device
             .load_texture_from(0, default)
@@ -95,15 +63,6 @@ impl TextureLoader {
                     if let Some(path) = path {
                         debug!("Starts texture '{path}' loading");
                         let time = Instant::now();
-                        // let texture = Texture::from_file(
-                        //     texture_id,
-                        //     &path,
-                        //     &thread_instance,
-                        //     &thread_device,
-                        //     physical_device,
-                        //     thread_queue,
-                        //     thread_command_pool,
-                        // );
                         let texture = fs::read(&path)
                             .map_err(TextureError::from)
                             .and_then(|data| thread_device.load_texture_from(texture_id, &data));

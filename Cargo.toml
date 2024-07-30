@@ -15,3 +15,7 @@ sdl2 = { version = "0.36" }
 vulkanalia = { version = "0.22", features = ["libloading", "provisional"] }
 zune-png = { version = "0.4.10", default-features = false }
 mesura = { version = "0.1" }
+fontdue = { version = "0.8.0" }
+
+[profile.dev.package.zune-png]
+opt-level = 3

@@ -12,24 +12,6 @@ pub struct Texture {
     pub view: vk::ImageView,
 }
 
-impl PartialOrd<Texture> for Texture {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Texture {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        if self.id > other.id {
-            std::cmp::Ordering::Greater
-        } else if self.id < other.id {
-            std::cmp::Ordering::Less
-        } else {
-            std::cmp::Ordering::Equal
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct TextureError(String);
 

@@ -12,7 +12,7 @@ impl Graphics {
         ImageSampler::create(&self.vulkan.device, 100)
     }
 
-    pub fn create_bindless_sampler_2d(&self) -> Sampler2D {
+    pub fn sampler(&self) -> Sampler2D {
         Sampler2D::create(&self.vulkan.device)
     }
 
