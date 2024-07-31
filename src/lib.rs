@@ -12,6 +12,7 @@ mod fonts;
 mod graphics;
 mod input;
 pub mod math;
+pub mod renderers;
 pub mod system;
 mod textures;
 mod vulkan;

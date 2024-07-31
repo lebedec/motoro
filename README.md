@@ -13,5 +13,5 @@ Functions:
 
 TODO:
 
-- add default 2D renderer with founts
+- add default 2D renderer with founts (add shader from blob)
 - fix texture/samplers GLSL variable API

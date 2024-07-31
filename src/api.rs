@@ -20,7 +20,10 @@ impl Graphics {
         unsafe { Uniform::create(slot, binding, &self.vulkan) }
     }
 
-    pub fn storage<T>(&self, slot: u32, binding: u32, n: usize) -> Storage<T> {
+    pub fn storage<T>(&self, slot: u32, binding: u32, n: usize) -> Storage<T>
+    where
+        T: Default + Clone,
+    {
         unsafe { Storage::create_many(slot, binding, &self.vulkan, n) }
     }
 

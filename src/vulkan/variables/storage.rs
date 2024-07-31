@@ -2,6 +2,7 @@ use crate::vulkan::{
     create_buffers, create_descriptor_pool, create_descriptor_set_layout, create_descriptors,
     MemoryBuffer, Vulkan,
 };
+use log::{error, info};
 use std::marker::PhantomData;
 use vulkanalia::vk::{
     Buffer, BufferUsageFlags, CopyDescriptorSet, DescriptorBufferInfo, DescriptorSet,
@@ -24,10 +25,12 @@ pub struct Storage<T> {
     sets: Vec<DescriptorSet>,
     buffers: Vec<MemoryBuffer>,
     device: Device,
+    collection: Vec<T>,
+    cursor: usize,
     _phantom: PhantomData<T>,
 }
 
-impl<T> Storage<T> {
+impl<T: Default + Clone> Storage<T> {
     pub fn layout(&self) -> DescriptorSetLayout {
         self.layout
     }
@@ -51,6 +54,12 @@ impl<T> Storage<T> {
         let physical_device_memory = vulkan
             .instance
             .get_physical_device_memory_properties(vulkan.physical_device);
+        info!(
+            "Creates storage buffers n={} size={} mem={}",
+            n,
+            std::mem::size_of::<T>(),
+            n * std::mem::size_of::<T>()
+        );
         let buffers = create_buffers(
             BufferUsageFlags::STORAGE_BUFFER,
             device,
@@ -66,6 +75,8 @@ impl<T> Storage<T> {
             buffers,
             device: device.clone(),
             _phantom: Default::default(),
+            collection: vec![T::default(); n],
+            cursor: 0,
         };
         for i in 0..frames {
             storage.write(i, storage.buffers[i].handle, n);
@@ -73,7 +84,24 @@ impl<T> Storage<T> {
         storage
     }
 
-    pub fn update_many(&self, frame: usize, value: &[T]) {
+    pub fn push(&mut self, value: T) -> u32 {
+        if self.cursor >= self.collection.len() {
+            error!("storage limit exceeded");
+            return 0;
+        }
+        self.collection[self.cursor] = value;
+        self.cursor += 1;
+        (self.cursor - 1) as u32
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cursor == 0
+    }
+
+    pub fn take_and_update(&mut self, frame: usize) -> usize {
+        let value = self.collection.as_slice();
+        let count = self.cursor;
+        self.cursor = 0;
         unsafe {
             let memory = self
                 .device
@@ -87,6 +115,7 @@ impl<T> Storage<T> {
             std::ptr::copy_nonoverlapping(value.as_ptr(), memory.cast(), value.len());
             self.device.unmap_memory(self.buffers[frame].memory);
         }
+        count
     }
 
     fn write(&self, frame: usize, buffer: Buffer, n: usize) {

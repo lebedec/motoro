@@ -102,7 +102,10 @@ impl Program {
         self.bind_descriptor(variable.slot, variable.descriptor(self.current_frame));
     }
 
-    pub fn bind_storage<T>(&self, variable: &Storage<T>) {
+    pub fn bind_storage<T>(&self, variable: &Storage<T>)
+    where
+        T: Default + Clone,
+    {
         self.bind_descriptor(variable.slot, variable.descriptor(self.current_frame));
     }
 
