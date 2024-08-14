@@ -1,3 +1,6 @@
+#[cfg(feature = "canvas-bumaga")]
+pub mod bumaga;
+
 use crate::math::{Vec2, Vec4};
 use crate::{
     Font, Graphics, Program, Sampler2D, Shader, Storage, Texture, Transform, Uniform, Vertex2D,
@@ -60,7 +63,7 @@ impl CanvasRenderer {
     pub fn new(graphics: &mut Graphics) -> Self {
         unsafe {
             let elements = graphics.storage(0, 4, MAX_ELEMENTS);
-            let textures = graphics.sampler();
+            let textures = graphics.sampler(1, 0);
             let transform = graphics.uniform(2, 0);
             let brushes = graphics.storage(3, 4, MAX_ELEMENTS);
 

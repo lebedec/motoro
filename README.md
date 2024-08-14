@@ -13,5 +13,8 @@ Functions:
 
 TODO:
 
-- add default 2D renderer with founts (add shader from blob)
+- add default 2D renderer with fonts (add shader from blob, test font loading)
+- add bumaga to default 2D renderer
+- design prefabs (remove get_texture/get_font)
 - fix texture/samplers GLSL variable API
+- do refactor, remove Vertex2D::no_input

@@ -6,7 +6,14 @@ use vulkanalia::vk::{
 };
 use vulkanalia::{vk, Device};
 
+/// Represents GLSL sampler2d non-uniform qualifier.
+/// ```glsl
+/// #extension GL_EXT_nonuniform_qualifier: require
+/// layout (set = 1, binding = 0) uniform sampler2D textures[];
+/// ```
 pub struct Sampler2D {
+    pub(crate) slot: u32,
+    pub(crate) binding: u32,
     max_descriptors: u32,
     pub layout: vk::DescriptorSetLayout,
     pub set: DescriptorSet,
@@ -15,11 +22,11 @@ pub struct Sampler2D {
 }
 
 impl Sampler2D {
-    pub fn create(device: &Device) -> Self {
+    pub fn create(slot: u32, binding: u32, device: &Device) -> Self {
         let max_descriptors = 256;
         // layout
-        let binding = vk::DescriptorSetLayoutBinding::builder()
-            .binding(0)
+        let binding_info = vk::DescriptorSetLayoutBinding::builder()
+            .binding(binding)
             .descriptor_type(DescriptorType::COMBINED_IMAGE_SAMPLER)
             .descriptor_count(max_descriptors)
             .stage_flags(ShaderStageFlags::ALL);
@@ -28,7 +35,7 @@ impl Sampler2D {
         let mut binding_flags =
             vk::DescriptorSetLayoutBindingFlagsCreateInfo::builder().binding_flags(&binding_flags);
         let layout = vk::DescriptorSetLayoutCreateInfo::builder()
-            .bindings(&[binding])
+            .bindings(&[binding_info])
             .flags(DescriptorSetLayoutCreateFlags::UPDATE_AFTER_BIND_POOL)
             .push_next(&mut binding_flags)
             .build();
@@ -64,6 +71,8 @@ impl Sampler2D {
         };
         info!("Creates {} bindless variables", descriptors.len());
         Self {
+            slot,
+            binding,
             max_descriptors,
             layout,
             set: descriptors[0],

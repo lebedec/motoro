@@ -19,8 +19,8 @@ pub struct TextureLoader {
     loading: Receiver<(String, Texture)>,
     loading_queue: Arc<RwLock<Vec<String>>>,
     records: HashMap<String, Option<Texture>>,
-    pub default_texture: Texture,
-    pub rect_texture: Texture,
+    pub fallback: Texture,
+    pub blank: Texture,
     metrics: TexturePrefabMetrics,
 }
 
@@ -97,8 +97,8 @@ impl TextureLoader {
             loading: responses,
             loading_queue,
             records: HashMap::default(),
-            default_texture: default,
-            rect_texture: rect,
+            fallback: default,
+            blank: rect,
             metrics: TexturePrefabMetrics::new(),
         }
     }
@@ -111,12 +111,12 @@ impl TextureLoader {
                 self.requests_queue
                     .send(path.to_string())
                     .expect("request must be sent");
-                self.default_texture
+                self.fallback
             }
             Some(record) => match record {
                 None => {
                     self.metrics.loadings.inc();
-                    self.default_texture
+                    self.fallback
                 }
                 Some(texture) => {
                     self.metrics.uses.inc();

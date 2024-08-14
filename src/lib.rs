@@ -6,6 +6,7 @@ pub use graphics::*;
 
 mod api;
 mod camera;
+mod colors;
 mod config;
 mod dpi;
 mod fonts;
