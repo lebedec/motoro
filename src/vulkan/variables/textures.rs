@@ -1,8 +1,8 @@
 use crate::Texture;
 use log::info;
 use vulkanalia::vk::{
-    DescriptorPoolCreateFlags, DescriptorSet, DescriptorSetLayoutCreateFlags, DescriptorType,
-    DeviceV1_0, HasBuilder, Sampler, ShaderStageFlags,
+    DescriptorPoolCreateFlags, DescriptorSet, DescriptorSetLayout, DescriptorSetLayoutCreateFlags,
+    DescriptorType, DeviceV1_0, HasBuilder, Sampler, ShaderStageFlags,
 };
 use vulkanalia::{vk, Device};
 
@@ -11,17 +11,25 @@ use vulkanalia::{vk, Device};
 /// #extension GL_EXT_nonuniform_qualifier: require
 /// layout (set = 1, binding = 0) uniform sampler2D textures[];
 /// ```
-pub struct Sampler2D {
+pub struct Textures {
     pub(crate) slot: u32,
     pub(crate) binding: u32,
     max_descriptors: u32,
-    pub layout: vk::DescriptorSetLayout,
-    pub set: DescriptorSet,
+    layout: DescriptorSetLayout,
+    set: DescriptorSet,
     textures: Vec<Texture>,
     device: Device,
 }
 
-impl Sampler2D {
+impl Textures {
+    pub fn layout(&self) -> DescriptorSetLayout {
+        self.layout
+    }
+
+    pub fn descriptor(&self) -> DescriptorSet {
+        self.set
+    }
+
     pub fn create(slot: u32, binding: u32, device: &Device) -> Self {
         let max_descriptors = 256;
         // layout

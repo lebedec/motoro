@@ -102,6 +102,11 @@ impl<T: Default + Clone> Storage<T> {
         let value = self.collection.as_slice();
         let count = self.cursor;
         self.cursor = 0;
+        self.update_from(frame, value);
+        count
+    }
+
+    pub fn update_from(&self, frame: usize, value: &[T]) {
         unsafe {
             let memory = self
                 .device
@@ -115,7 +120,6 @@ impl<T: Default + Clone> Storage<T> {
             std::ptr::copy_nonoverlapping(value.as_ptr(), memory.cast(), value.len());
             self.device.unmap_memory(self.buffers[frame].memory);
         }
-        count
     }
 
     fn write(&self, frame: usize, buffer: Buffer, n: usize) {

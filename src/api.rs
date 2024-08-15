@@ -13,8 +13,8 @@ impl Graphics {
         ImageSampler::create(&self.vulkan.device, 100)
     }
 
-    pub fn sampler(&self, slot: u32, binding: u32) -> Sampler2D {
-        Sampler2D::create(slot, binding, &self.vulkan.device)
+    pub fn sampler(&self, slot: u32, binding: u32) -> Textures {
+        Textures::create(slot, binding, &self.vulkan.device)
     }
 
     pub fn uniform<T>(&self, slot: u32, binding: u32) -> Uniform<T> {

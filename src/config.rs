@@ -39,6 +39,11 @@ impl GraphicsConfig {
         self
     }
 
+    pub fn resolution(mut self, resolution: [u32; 2]) -> Self {
+        self.resolution = resolution;
+        self
+    }
+
     pub fn resolution_reference(mut self, resolution: [u32; 2]) -> Self {
         self.resolution_reference = Some(resolution);
         self

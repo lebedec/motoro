@@ -1,5 +1,5 @@
 use crate::vulkan::{create_pipeline, Swapchain};
-use crate::{Mesh, Sampler2D, Shader, Storage, Uniform};
+use crate::{Mesh, Shader, Storage, Textures, Uniform};
 use log::info;
 use vulkanalia::vk::{DeviceV1_0, Handle, HasBuilder, PipelineVertexInputStateCreateInfo};
 use vulkanalia::{vk, Device};
@@ -117,8 +117,8 @@ impl Program {
         }
     }
 
-    pub fn bind_sampler(&self, variable: &Sampler2D) {
-        self.bind_descriptor(variable.slot, variable.set)
+    pub fn bind_textures(&self, variable: &Textures) {
+        self.bind_descriptor(variable.slot, variable.descriptor())
     }
 
     pub fn bind_descriptor(&self, index: u32, set: vk::DescriptorSet) {
