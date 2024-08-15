@@ -1,8 +1,10 @@
-use crate::input::poll_event;
+use crate::input::{poll_event, UserInput};
 use crate::textures::TextureLoader;
 use crate::vulkan::Vulkan;
 use crate::{dpi, FontLoader, GraphicsConfig, GraphicsMode};
 use log::info;
+use sdl2::event::Event;
+use sdl2::sys;
 use sdl2::video::{FullscreenType, Window, WindowPos};
 use std::fs::create_dir_all;
 use vulkanalia::vk;
@@ -13,6 +15,7 @@ pub struct Graphics {
     pub(crate) vulkan: Vulkan,
     pub textures: TextureLoader,
     pub fonts: FontLoader,
+    pub input: UserInput,
 }
 
 impl Graphics {
@@ -80,11 +83,13 @@ impl Graphics {
             Some([_, height]) => drawable.1 as f32 / height as f32,
         };
         let fonts = FontLoader::new(&config.fonts.cache, fonts_resolution_scale);
+        let input = UserInput::default();
         Self {
             window,
             vulkan,
             textures,
             fonts,
+            input,
         }
     }
 
@@ -98,6 +103,13 @@ impl Graphics {
     }
 
     pub fn capture_user_input(&mut self) {
-        while let Some(event) = poll_event() {}
+        self.input.clear();
+        while let Some(event) = poll_event() {
+            if let Event::Quit { .. } = event {
+                std::process::exit(0);
+            } else {
+                self.input.handle(event);
+            }
+        }
     }
 }

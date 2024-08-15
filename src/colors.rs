@@ -11,6 +11,19 @@ impl Colors for Vec4 {
     }
 }
 
+impl Colors for [u8; 4] {
+    #[inline(always)]
+    fn to_vec4(&self) -> Vec4 {
+        let [r, g, b, a] = *self;
+        [
+            r as f32 / 255.0,
+            g as f32 / 255.0,
+            b as f32 / 255.0,
+            a as f32 / 255.0,
+        ]
+    }
+}
+
 impl Colors for (f32, f32, f32, f32) {
     #[inline(always)]
     fn to_vec4(&self) -> Vec4 {

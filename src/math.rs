@@ -4,8 +4,20 @@ pub fn vec2_add(a: Vec2, b: Vec2) -> Vec2 {
     [a[0] + b[0], a[1] + b[1]]
 }
 
+pub fn vec2_floor(a: Vec2) -> Vec2 {
+    [a[0].floor(), a[1].floor()]
+}
+
 pub fn vec2_scale(a: Vec2, s: f32) -> Vec2 {
     [a[0] * s, a[1] * s]
+}
+
+pub fn vec2_snap(a: Vec2, size: Vec2) -> Vec2 {
+    let [mut x, mut y] = a;
+    let [w, h] = size;
+    let a = vec2_floor([x / w, y / h]);
+    let [x, y] = a;
+    [x * w, y * h]
 }
 
 pub type Vec3 = [f32; 3];

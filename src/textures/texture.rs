@@ -1,5 +1,6 @@
 use std::io;
 
+use crate::math::Vec2;
 use vulkanalia::vk;
 use zune_png::error::PngDecodeErrors;
 
@@ -10,6 +11,7 @@ pub struct Texture {
     pub image: vk::Image,
     pub memory: vk::DeviceMemory,
     pub view: vk::ImageView,
+    pub size: [u32; 2],
 }
 
 #[derive(Debug)]

@@ -3,6 +3,7 @@ pub use camera::*;
 pub use config::*;
 pub use fonts::*;
 pub use graphics::*;
+pub use input::*;
 
 mod api;
 mod camera;

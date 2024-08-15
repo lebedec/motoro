@@ -155,6 +155,7 @@ unsafe fn create_image(
         image,
         memory,
         view,
+        size: [width, height],
     }
 }
 
