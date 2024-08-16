@@ -30,7 +30,7 @@ use mesura::{Counter, Gauge, GaugeValue};
 use crate::camera::Camera;
 use crate::math::{
     mat4_from_scale, mat4_from_translation, mat4_identity, mat4_look_at_rh, mat4_mul,
-    mat4_orthographic, mat4_prepend_scale, vec3_scale, Mat4, Vec2, Vec3,
+    mat4_orthographic, mat4_prepend_scale, Mat4, Vec2, Vec3,
 };
 use crate::textures::{Texture, TextureLoader};
 use crate::vulkan::device::create_logical_device;
@@ -381,36 +381,12 @@ impl Vulkan {
             .expect("command buffer must end");
     }
 
-    pub fn screen(&self) -> [f32; 2] {
+    pub fn swapchain_image_size(&self) -> [f32; 2] {
         [
             self.swapchain.extent.width as f32,
             self.swapchain.extent.height as f32,
         ]
     }
-
-    // pub fn get_ui_camera(&self, camera: &Camera) -> Transform {
-    //     let screen = self.screen();
-    //     let proj = Mat4::new_orthographic(0.0, screen.x, 0.0, screen.y, 0.0, 1.0);
-    //
-    //     let view = Mat4::look_at_rh(
-    //         &[0.0, 0.0, 1.0].into(),
-    //         &[0.0, 0.0, 0.0].into(),
-    //         &[0.0, 1.0, 0.0].into(),
-    //     );
-    //
-    //     let scaling = Vector3::new(camera.resolution_scale, camera.resolution_scale, 1.0);
-    //
-    //     let model = Mat4::identity().prepend_nonuniform_scaling(&scaling);
-    //
-    //     Transform { model, view, proj }
-    // }
-
-    // pub fn finish(&mut self) {
-    //     unsafe {
-    //         self.device.device_wait_idle().expect("device must be idle");
-    //         self.destroy();
-    //     }
-    // }
 
     pub unsafe fn resize(&mut self, window: &Window) {
         info!(

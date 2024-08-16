@@ -30,7 +30,7 @@ pub struct Storage<T> {
     _phantom: PhantomData<T>,
 }
 
-impl<T: Default + Clone> Storage<T> {
+impl<T: Default + Clone + Copy> Storage<T> {
     pub fn layout(&self) -> DescriptorSetLayout {
         self.layout
     }
@@ -92,6 +92,17 @@ impl<T: Default + Clone> Storage<T> {
         self.collection[self.cursor] = value;
         self.cursor += 1;
         (self.cursor - 1) as u32
+    }
+
+    pub fn extend(&mut self, values: &[T]) -> u32 {
+        let count = values.len();
+        if self.cursor + count >= self.collection.len() {
+            error!("storage limit exceeded");
+            return 0;
+        }
+        self.collection[self.cursor..self.cursor + count].copy_from_slice(values);
+        self.cursor += count;
+        (self.cursor - count) as u32
     }
 
     pub fn is_empty(&self) -> bool {

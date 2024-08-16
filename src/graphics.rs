@@ -1,7 +1,8 @@
 use crate::input::{poll_event, UserInput};
+use crate::math::VecComponents;
 use crate::textures::TextureLoader;
 use crate::vulkan::Vulkan;
-use crate::{dpi, FontLoader, GraphicsConfig, GraphicsMode};
+use crate::{dpi, Camera, FontLoader, GraphicsConfig, GraphicsMode};
 use log::info;
 use sdl2::event::Event;
 use sdl2::sys;
@@ -57,17 +58,6 @@ impl Graphics {
         let window_size = window.size();
         let dpi_scale = drawable.1 as f32 / window_size.1 as f32;
         info!("SDL window size is {window_size:?} drawable is {drawable:?} dpi scale={dpi_scale}");
-        // let mut camera = Camera::default();
-        // reference resolution is working resolution of game assets
-        // pixel art style makes it possible to work in lower resolution
-        // scaling in several times looks acceptable
-        // let resolution_scale = drawable.1 as f32 / Camera::REFERENCE.y;
-        // info!(
-        //     "Reference resolution is {:?}, camera scale is {resolution_scale:.1}",
-        //     Camera::REFERENCE
-        // );
-        // camera.resolution_scale = resolution_scale;
-        // camera.input_scale = dpi_scale;
         let present_mode = if config.vsync {
             vk::PresentModeKHR::FIFO
         } else {

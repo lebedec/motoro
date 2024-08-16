@@ -1,16 +1,20 @@
 pub use crate::colors::*;
-use crate::math::Vec2;
+use crate::math::{Vec2, VecArith};
 pub use crate::textures::*;
 pub use crate::vulkan::program::*;
 pub use crate::vulkan::shaders::*;
 pub use crate::vulkan::variables::*;
-use crate::Graphics;
+use crate::{Camera, Graphics};
 use vulkanalia::vk;
 use vulkanalia::vk::{DeviceV1_0, HasBuilder, PipelineVertexInputStateCreateInfo};
 
 impl Graphics {
     pub fn create_sampler(&self) -> ImageSampler {
         ImageSampler::create(&self.vulkan.device, 100)
+    }
+
+    pub fn camera(&self) -> Camera {
+        Camera::create(self)
     }
 
     pub fn sampler(&self, slot: u32, binding: u32) -> Textures {
@@ -23,7 +27,7 @@ impl Graphics {
 
     pub fn storage<T>(&self, slot: u32, binding: u32, n: usize) -> Storage<T>
     where
-        T: Default + Clone,
+        T: Default + Clone + Copy,
     {
         unsafe { Storage::create_many(slot, binding, &self.vulkan, n) }
     }
@@ -88,10 +92,6 @@ impl Graphics {
 
     pub fn chain(&self) -> usize {
         self.vulkan.chain
-    }
-
-    pub fn screen(&self) -> Vec2 {
-        self.vulkan.screen()
     }
 }
 

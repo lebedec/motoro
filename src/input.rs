@@ -1,3 +1,4 @@
+use crate::Camera;
 use sdl2::event::Event;
 use sdl2::mouse::MouseButton;
 use sdl2::sys;
@@ -20,7 +21,7 @@ impl UserInput {
     pub(crate) fn handle(&mut self, event: Event) {
         match &event {
             Event::MouseMotion { x, y, .. } => {
-                self.mouse.position = [*x as f32, *y as f32];
+                self.mouse.raw = [*x, *y];
             }
             Event::MouseButtonDown { mouse_btn, .. } => match mouse_btn {
                 MouseButton::Left => {
@@ -53,10 +54,20 @@ impl UserInput {
 
 #[derive(Debug, Default, Clone)]
 pub struct MouseInput {
-    pub position: [f32; 2],
+    pub raw: [i32; 2],
     pub wheel: [f32; 2],
     pub left: MouseButtonInput,
     pub right: MouseButtonInput,
+}
+
+impl MouseInput {
+    pub fn position(&self, camera: &Camera) -> [f32; 2] {
+        let [x, y] = self.raw;
+        [
+            x as f32 / camera.resolution_scale,
+            y as f32 / camera.resolution_scale,
+        ]
+    }
 }
 
 #[derive(Debug, Default, Clone)]

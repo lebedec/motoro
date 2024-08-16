@@ -7,8 +7,6 @@ pub struct GraphicsConfig {
     #[serde(default = "default_resolution")]
     pub resolution: [u32; 2],
     #[serde(default)]
-    pub resolution_reference: Option<[u32; 2]>,
-    #[serde(default)]
     pub position: Option<[i32; 2]>,
     #[serde(default = "default_vsync")]
     pub vsync: bool,
@@ -22,7 +20,6 @@ impl Default for GraphicsConfig {
             title: default_title(),
             mode: GraphicsMode::default(),
             resolution: default_resolution(),
-            resolution_reference: None,
             position: None,
             vsync: default_vsync(),
             fonts: FontsConfig::default(),
@@ -41,11 +38,6 @@ impl GraphicsConfig {
 
     pub fn resolution(mut self, resolution: [u32; 2]) -> Self {
         self.resolution = resolution;
-        self
-    }
-
-    pub fn resolution_reference(mut self, resolution: [u32; 2]) -> Self {
-        self.resolution_reference = Some(resolution);
         self
     }
 }
