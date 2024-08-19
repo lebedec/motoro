@@ -2,7 +2,7 @@ use crate::input::{poll_event, UserInput};
 use crate::math::VecComponents;
 use crate::textures::TextureLoader;
 use crate::vulkan::Vulkan;
-use crate::{dpi, Camera, Colors, FontLoader, GraphicsConfig, GraphicsMode};
+use crate::{dpi, Camera, Colors, FontLoader, FontLoaderHandle, GraphicsConfig, GraphicsMode};
 use log::info;
 use sdl2::event::Event;
 use sdl2::sys;
@@ -15,7 +15,7 @@ pub struct Graphics {
     pub(crate) window: Window,
     pub(crate) vulkan: Vulkan,
     pub textures: TextureLoader,
-    pub fonts: FontLoader,
+    pub fonts: FontLoaderHandle,
     pub input: UserInput,
 }
 

@@ -60,6 +60,17 @@ pub(crate) fn rasterize_font_to_image_file(
             data[offset + 2] = 255;
             data[offset + 3] = *alpha;
         }
+        // if char == '.' || char == 'y' || char == 'e' {
+        //     println!(
+        //         "GLYPH {char} h{} ah{} ymin{} bymin{} bh{} lh{}",
+        //         glyph.height,
+        //         glyph.advance_height,
+        //         glyph.ymin,
+        //         glyph.bounds.ymin,
+        //         glyph.bounds.height,
+        //         line_height
+        //     );
+        // }
         let constants = Char {
             position: [0.0; 2],
             image: [w as f32, h as f32],
@@ -69,6 +80,7 @@ pub(crate) fn rasterize_font_to_image_file(
                 step_x as f32 / resolution_scale,
                 line_height as f32 / resolution_scale,
             ],
+            height: glyph.height as f32,
         };
         charset.insert(char, constants);
         if char == MISSING_CHAR {

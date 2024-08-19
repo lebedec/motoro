@@ -20,6 +20,7 @@ pub struct Char {
     pub src: Vec2,
     pub uv: Vec2,
     pub size: Vec2,
+    pub height: f32,
 }
 
 impl Font {
@@ -32,7 +33,9 @@ impl Font {
         let settings = LayoutSettings {
             x: start[0] * scale,
             y: start[1] * scale,
-            max_width: Some(max_width * scale),
+            // HACK: font size added to fix layout recalculation in same max_width
+            max_width: Some(max_width * scale + self.size),
+            line_height: 1.2,
             ..LayoutSettings::default()
         };
         layout.reset(&settings);
