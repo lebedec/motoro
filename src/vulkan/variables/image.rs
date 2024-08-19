@@ -1,7 +1,7 @@
 use crate::vulkan::{create_descriptor_pool, create_descriptor_set_layout, create_descriptors};
 use crate::Texture;
 use std::collections::HashMap;
-use vulkanalia::vk::{DescriptorImageInfo, DeviceV1_0, HasBuilder, WriteDescriptorSet};
+use vulkanalia::vk::{DescriptorImageInfo, DeviceV1_0, Handle, HasBuilder, WriteDescriptorSet};
 use vulkanalia::{vk, Device};
 
 pub struct ImageSampler {
@@ -44,7 +44,10 @@ impl ImageSampler {
             Self::write_many(set, sampler, vec![texture], device);
             set
         };
-        *self.sets.entry(texture.id as u64).or_insert_with(factory)
+        *self
+            .sets
+            .entry(texture.view.as_raw())
+            .or_insert_with(factory)
     }
 
     pub fn create_descriptors(&self, device: &Device, count: usize) -> Vec<vk::DescriptorSet> {

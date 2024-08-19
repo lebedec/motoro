@@ -8,6 +8,7 @@ use log::{debug, error, info};
 use mesura::GaugeValue;
 
 use crate::textures::{Texture, TextureError, TextureLoaderMetrics, TexturePrefabMetrics};
+use crate::vulkan::textures::VulkanTextureLoaderDevice;
 
 pub trait TextureLoaderDevice: Clone + Send {
     fn load_texture_from(&self, id: usize, data: &[u8]) -> Result<Texture, TextureError>;
@@ -22,10 +23,11 @@ pub struct TextureLoader {
     pub fallback: Texture,
     pub blank: Texture,
     metrics: TexturePrefabMetrics,
+    device: VulkanTextureLoaderDevice,
 }
 
 impl TextureLoader {
-    pub fn new(device: impl TextureLoaderDevice + 'static) -> Self {
+    pub fn new(device: VulkanTextureLoaderDevice) -> Self {
         info!("Creates texture loader");
         let default = include_bytes!("builtin/default.png");
         let default = device
@@ -100,7 +102,12 @@ impl TextureLoader {
             fallback: default,
             blank: rect,
             metrics: TexturePrefabMetrics::new(),
+            device,
         }
+    }
+
+    pub fn create_texture(&self, width: u32, height: u32, data: &[u8]) -> Texture {
+        self.device.create_texture(width, height, data)
     }
 
     pub fn get_texture(&mut self, path: &str) -> Texture {

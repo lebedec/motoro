@@ -2,7 +2,7 @@ use crate::input::{poll_event, UserInput};
 use crate::math::VecComponents;
 use crate::textures::TextureLoader;
 use crate::vulkan::Vulkan;
-use crate::{dpi, Camera, FontLoader, GraphicsConfig, GraphicsMode};
+use crate::{dpi, Camera, Colors, FontLoader, GraphicsConfig, GraphicsMode};
 use log::info;
 use sdl2::event::Event;
 use sdl2::sys;
@@ -83,9 +83,9 @@ impl Graphics {
         }
     }
 
-    pub fn prepare(&mut self) {
+    pub fn clear(&mut self, color: impl Colors) {
         self.vulkan.update();
-        self.vulkan.prepare(&self.window);
+        self.vulkan.prepare(&self.window, color.to_vec4());
     }
 
     pub fn present(&mut self) {

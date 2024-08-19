@@ -7,7 +7,6 @@ use zune_png::error::PngDecodeErrors;
 /// TODO: abstract away from Vulkan handles
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Texture {
-    pub id: usize,
     pub image: vk::Image,
     pub memory: vk::DeviceMemory,
     pub view: vk::ImageView,

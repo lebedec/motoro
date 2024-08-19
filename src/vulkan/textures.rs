@@ -16,12 +16,29 @@ pub struct VulkanTextureLoaderDevice {
     pub(crate) queue: Queue,
 }
 
+impl VulkanTextureLoaderDevice {
+    pub fn create_texture(&self, width: u32, height: u32, data: &[u8]) -> Texture {
+        let texture = unsafe {
+            create_texture(
+                &self.instance,
+                &self.device,
+                self.physical_device,
+                self.queue,
+                self.command_pool,
+                width,
+                height,
+                data,
+            )
+        };
+        texture
+    }
+}
+
 impl TextureLoaderDevice for VulkanTextureLoaderDevice {
     fn load_texture_from(&self, id: usize, data: &[u8]) -> Result<Texture, TextureError> {
         read_texture_from_data(data).and_then(|(image, data)| {
             let texture = unsafe {
                 create_texture(
-                    id,
                     &self.instance,
                     &self.device,
                     self.physical_device,
@@ -38,7 +55,6 @@ impl TextureLoaderDevice for VulkanTextureLoaderDevice {
 }
 
 unsafe fn create_texture(
-    id: usize,
     instance: &Instance,
     device: &Device,
     physical_device: vk::PhysicalDevice,
@@ -62,14 +78,14 @@ unsafe fn create_texture(
         .expect("memory must be mapped");
     std::ptr::copy_nonoverlapping(data.as_ptr(), memory.cast(), data.len());
     device.unmap_memory(staging.memory);
+    let format = vk::Format::R8G8B8A8_UNORM;
     let texture = create_image(
-        id,
         instance,
         device,
         physical_device,
         width,
         height,
-        vk::Format::R8G8B8A8_SRGB,
+        format,
         vk::ImageTiling::LINEAR,
         vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::TRANSFER_DST,
         vk::MemoryPropertyFlags::DEVICE_LOCAL,
@@ -80,7 +96,7 @@ unsafe fn create_texture(
         queue,
         command_pool,
         texture.image,
-        vk::Format::R8G8B8A8_SRGB,
+        format,
         vk::ImageLayout::UNDEFINED,
         vk::ImageLayout::TRANSFER_DST_OPTIMAL,
     );
@@ -98,7 +114,7 @@ unsafe fn create_texture(
         queue,
         command_pool,
         texture.image,
-        vk::Format::R8G8B8A8_SRGB,
+        format,
         vk::ImageLayout::TRANSFER_DST_OPTIMAL,
         vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
     );
@@ -108,7 +124,6 @@ unsafe fn create_texture(
 }
 
 unsafe fn create_image(
-    id: usize,
     instance: &Instance,
     device: &Device,
     physical_device: vk::PhysicalDevice,
@@ -149,9 +164,8 @@ unsafe fn create_image(
     device
         .bind_image_memory(image, memory, 0)
         .expect("image memory must bound");
-    let view = create_image_view(device, image, vk::Format::R8G8B8A8_SRGB);
+    let view = create_image_view(device, image, vk::Format::R8G8B8A8_UNORM);
     Texture {
-        id,
         image,
         memory,
         view,

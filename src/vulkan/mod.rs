@@ -40,7 +40,7 @@ use crate::{Mesh, Program, Shader, Storage, Uniform};
 mod device;
 pub mod program;
 pub mod shaders;
-mod textures;
+pub mod textures;
 pub mod variables;
 
 pub struct Vulkan {
@@ -249,12 +249,12 @@ impl Vulkan {
         }
     }
 
-    pub fn prepare(&mut self, window: &Window) {
+    pub fn prepare(&mut self, window: &Window, clear_color: [f32; 4]) {
         loop {
             unsafe {
                 if let Some(chain) = self.acquire_next_image(window) {
                     self.chain = chain;
-                    self.begin_render_pass();
+                    self.begin_render_pass(clear_color);
                     for program in self.programs() {
                         program.set_command_buffer(self.command_buffers[self.chain]);
                         program.set_chain(self.chain);
@@ -344,7 +344,7 @@ impl Vulkan {
         self.sync.frame = (self.sync.frame + 1) % FRAMES_PROCESSING_CONCURRENCY;
     }
 
-    unsafe fn begin_render_pass(&self) {
+    unsafe fn begin_render_pass(&self, clear_color: [f32; 4]) {
         let command_pool = self.command_pools[self.chain];
         self.device
             .reset_command_pool(command_pool, vk::CommandPoolResetFlags::empty())
@@ -360,7 +360,7 @@ impl Vulkan {
             .extent(self.swapchain.extent);
         let color_clear_value = vk::ClearValue {
             color: vk::ClearColorValue {
-                float32: [0.43, 0.41, 0.29, 1.0],
+                float32: clear_color,
             },
         };
         let clear_values = &[color_clear_value];
@@ -784,7 +784,7 @@ impl SwapchainSupport {
             .iter()
             .cloned()
             .find(|surface| {
-                surface.format == vk::Format::B8G8R8A8_SRGB
+                surface.format == vk::Format::R8G8B8A8_UNORM
                     && surface.color_space == vk::ColorSpaceKHR::SRGB_NONLINEAR
             })
             .unwrap_or_else(|| self.formats[0])
