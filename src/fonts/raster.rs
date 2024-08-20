@@ -19,11 +19,7 @@ pub(crate) fn rasterize_font_to_image_file(
     size: f32,
     resolution_scale: f32,
 ) -> Result<Font, FontError> {
-    let key = format!(
-        "{name}-{}-{}.png",
-        (size * 10.0) as u32,
-        (resolution_scale * 10.0) as u32
-    );
+    let key = format!("{name}-{}-{}.png", (size) as u32, (resolution_scale) as u32);
     let texture = format!("{cache}/{key}");
 
     let size = size * resolution_scale;
@@ -36,7 +32,7 @@ pub(crate) fn rasterize_font_to_image_file(
     let font = fontdue::Font::from_bytes(input, font_settings)?;
 
     let w = (512.0 * resolution_scale) as usize;
-    let h = (256.0 * resolution_scale) as usize;
+    let h = (512.0 * resolution_scale) as usize;
     let mut data = vec![0; w * h * 4];
     let mut offset_x = 0usize;
     let mut offset_y = 0usize;

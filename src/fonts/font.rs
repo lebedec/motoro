@@ -27,15 +27,13 @@ impl Font {
     /// NOTE: Resolution scale must be applied to layout coordinates for better kerning and spacing
     /// calculations in font engine. Result glyph x and y coordinates different depends on
     /// TextStyle size and layout settings. You can't just scale atlas texture with font letters!
-    pub fn layout(&self, start: Vec2, max_width: f32, text: &str) -> Vec<Char> {
+    pub fn layout(&self, text: &str, max_width: f32, line_height: f32) -> Vec<Char> {
         let scale = self.resolution_scale;
         let mut layout = Layout::new(CoordinateSystem::PositiveYDown);
         let settings = LayoutSettings {
-            x: start[0] * scale,
-            y: start[1] * scale,
             // HACK: font size added to fix layout recalculation in same max_width
             max_width: Some(max_width * scale + self.size),
-            line_height: 1.2,
+            line_height,
             ..LayoutSettings::default()
         };
         layout.reset(&settings);

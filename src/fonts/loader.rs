@@ -1,37 +1,101 @@
 use crate::fonts::rasterize_font_to_image_file;
-use crate::{Font, MISSING_CHAR};
+use crate::math::{Vec3, VecArith, VecMagnitude};
+use crate::{Font, FontError, MISSING_CHAR};
 use log::info;
 use std::sync::{Arc, RwLock};
+
+struct Record {
+    family: String,
+    weight: u16,
+    style: String,
+    size: f32,
+    font: Font,
+}
+
+impl Record {
+    fn diff(&self, weigth: u16, style: &str, size: f32) -> f32 {
+        let search = Self::embed(weigth, style, size);
+        let target = Self::embed(self.weight, &self.style, self.size);
+        target.sub(search).magnitude()
+    }
+
+    #[inline(always)]
+    fn embed(weight: u16, style: &str, size: f32) -> Vec3 {
+        let style = match style {
+            "normal" => 0.0,
+            "italic" => 1.0,
+            "oblique" => 2.0,
+            _ => 9.0,
+        };
+        [size * 1000.0, weight as f32, style]
+    }
+}
 
 pub type FontLoaderHandle = Arc<RwLock<FontLoader>>;
 
 pub struct FontLoader {
-    pub default: Font,
     resolution_scale: f32,
+    registry: Vec<Record>,
+    cache: String,
 }
 
 impl FontLoader {
     pub fn new(cache: &str, resolution_scale: f32) -> FontLoaderHandle {
         info!("Creates font loader");
         let default = include_bytes!("builtin/Roboto/Roboto-Regular.ttf");
-        let default = rasterize_font_to_image_file(
-            default,
-            cache,
-            "default",
-            &(ascii() + &cyrillic()),
-            16.0,
+        let mut loader = Self {
             resolution_scale,
-        )
-        .expect("default font must be created");
-        let loader = Self {
-            default,
-            resolution_scale,
+            registry: vec![],
+            cache: cache.to_string(),
         };
+        loader
+            .load_font("system-ui", 400, "normal", 16.0, default)
+            .expect("default font must be loaded");
         Arc::new(RwLock::new(loader))
     }
 
-    pub fn get_font(&self, path: &str, size: f32) -> &Font {
-        &self.default
+    pub fn load_font(
+        &mut self,
+        family: &str,
+        weight: u16,
+        style: &str,
+        size: f32,
+        data: &[u8],
+    ) -> Result<(), FontError> {
+        let font = rasterize_font_to_image_file(
+            data,
+            &self.cache,
+            &format!("{family}-{weight}-{style}"),
+            &(ascii() + &cyrillic()),
+            size,
+            self.resolution_scale,
+        )?;
+        self.registry.push(Record {
+            family: family.to_string(),
+            weight,
+            style: style.to_string(),
+            size,
+            font,
+        });
+        Ok(())
+    }
+
+    pub fn match_font(&self, family: &str, weight: u16, style: &str, size: f32) -> &Font {
+        let mut best = 0;
+        let mut best_diff = f32::INFINITY;
+        for (index, record) in self.registry.iter().enumerate() {
+            if record.family == family {
+                let diff = record.diff(weight, style, size);
+                if diff < best_diff {
+                    best_diff = diff;
+                    best = index;
+                }
+                if diff == 0.0 {
+                    break;
+                }
+            }
+        }
+        &self.registry[best].font
     }
 }
 
