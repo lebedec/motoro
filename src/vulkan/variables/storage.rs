@@ -3,7 +3,9 @@ use crate::vulkan::{
     MemoryBuffer, Vulkan,
 };
 use log::{error, info};
+use std::collections::HashSet;
 use std::marker::PhantomData;
+use std::sync::{OnceLock, RwLock};
 use vulkanalia::vk::{
     Buffer, BufferUsageFlags, CopyDescriptorSet, DescriptorBufferInfo, DescriptorSet,
     DescriptorSetLayout, DescriptorType, DeviceV1_0, HasBuilder, InstanceV1_0, MemoryMapFlags,
@@ -28,6 +30,29 @@ pub struct Storage<T> {
     collection: Vec<T>,
     cursor: usize,
     _phantom: PhantomData<T>,
+}
+
+fn get_errors_set() -> &'static mut Box<HashSet<String>> {
+    unsafe {
+        static mut SINGLETON: OnceLock<Box<HashSet<String>>> = OnceLock::new();
+        SINGLETON.get_or_init(|| Box::new(HashSet::new()));
+        SINGLETON.get_mut().expect("initialized")
+    }
+}
+
+macro_rules! error_once {
+    ($($arg:tt)*) => {{
+        let res = format!($($arg)*);
+        error_once_impl(res);
+    }}
+}
+
+fn error_once_impl(error: String) {
+    let errors = get_errors_set();
+    if !errors.contains(&error) {
+        error!("{}", error);
+        errors.insert(error);
+    }
 }
 
 impl<T: Default + Clone + Copy> Storage<T> {
@@ -86,7 +111,10 @@ impl<T: Default + Clone + Copy> Storage<T> {
 
     pub fn push(&mut self, value: T) -> u32 {
         if self.cursor >= self.collection.len() {
-            error!("storage limit exceeded");
+            error!(
+                "enable to push, storage limit {} exceeded",
+                self.collection.len()
+            );
             return 0;
         }
         self.collection[self.cursor] = value;
@@ -97,7 +125,10 @@ impl<T: Default + Clone + Copy> Storage<T> {
     pub fn extend(&mut self, values: &[T]) -> u32 {
         let count = values.len();
         if self.cursor + count >= self.collection.len() {
-            error!("storage limit exceeded");
+            error!(
+                "unable to extend, storage limit {} exceeded",
+                self.collection.len()
+            );
             return 0;
         }
         self.collection[self.cursor..self.cursor + count].copy_from_slice(values);

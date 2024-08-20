@@ -32,8 +32,8 @@ impl Graphics {
         unsafe { Storage::create_many(slot, binding, &self.vulkan, n) }
     }
 
-    pub fn mesh(&self, vertices: &[Vertex2D]) -> Mesh {
-        unsafe { Mesh::create(vertices, &self.vulkan) }
+    pub fn mesh(&self, n: usize) -> Mesh {
+        unsafe { Mesh::create(&self.vulkan, n) }
     }
 
     pub fn create_pixel_perfect_sampler(&self) -> vk::Sampler {
@@ -69,7 +69,7 @@ impl Graphics {
         push_constants: Vec<vk::PushConstantRange>,
         sampler: vk::Sampler,
         layouts: Vec<vk::DescriptorSetLayout>,
-        vertex_input_state: PipelineVertexInputStateCreateInfo,
+        vertex_input: Option<PipelineVertexInputStateCreateInfo>,
     ) -> Box<Program> {
         let program = unsafe {
             Program::create(
@@ -82,7 +82,7 @@ impl Graphics {
                 push_constants,
                 sampler,
                 layouts,
-                vertex_input_state,
+                vertex_input,
             )
         };
         let mut program = Box::new(program);

@@ -1,5 +1,5 @@
 use crate::vulkan::{create_pipeline, Swapchain};
-use crate::{Mesh, Shader, Storage, Textures, Uniform};
+use crate::{Mesh, Shader, Storage, Textures, Uniform, Vertices};
 use log::info;
 use vulkanalia::vk::{DeviceV1_0, Handle, HasBuilder, PipelineVertexInputStateCreateInfo};
 use vulkanalia::{vk, Device};
@@ -44,8 +44,10 @@ impl Program {
         push_constants: Vec<vk::PushConstantRange>,
         sampler: vk::Sampler,
         layouts: Vec<vk::DescriptorSetLayout>,
-        vertex_input_state: PipelineVertexInputStateCreateInfo,
+        vertex_input: Option<PipelineVertexInputStateCreateInfo>,
     ) -> Self {
+        let vertex_input =
+            vertex_input.unwrap_or(PipelineVertexInputStateCreateInfo::builder().build());
         let (pipeline_layout, pipeline) = create_pipeline(
             &device,
             &swapchain,
@@ -54,7 +56,7 @@ impl Program {
             &vert.read(),
             &frag.read(),
             push_constants.clone(),
-            vertex_input_state,
+            vertex_input,
         );
         info!("Creates {name} {:?}", pipeline);
         Self {
@@ -69,7 +71,7 @@ impl Program {
             current_commands: vk::CommandBuffer::null(),
             current_frame: 0,
             layouts,
-            vertex_input_state,
+            vertex_input_state: vertex_input,
         }
     }
 
@@ -107,14 +109,6 @@ impl Program {
         T: Default + Clone + Copy,
     {
         self.bind_descriptor(variable.slot, variable.descriptor(self.current_frame));
-    }
-
-    pub fn bind_mesh(&self, mesh: &Mesh) {
-        unsafe {
-            let buf = self.current_commands;
-            self.device
-                .cmd_bind_vertex_buffers(buf, 0, &[mesh.buffer.handle], &[0]);
-        }
     }
 
     pub fn bind_textures(&self, variable: &Textures) {
@@ -180,6 +174,29 @@ impl Program {
             let buf = self.current_commands;
             self.device
                 .cmd_draw(buf, vertex_count as u32, elements as u32, 0, 0);
+        }
+    }
+
+    pub fn bind_mesh(&self, mesh: &Mesh) {
+        unsafe {
+            self.device.cmd_bind_vertex_buffers(
+                self.current_commands,
+                0,
+                &[mesh.buffers[self.current_frame].handle],
+                &[0],
+            );
+        }
+    }
+
+    pub fn draw_mesh(&self, vertices: Vertices) {
+        unsafe {
+            self.device.cmd_draw(
+                self.current_commands,
+                vertices.len as u32,
+                1,
+                vertices.ptr as u32,
+                0,
+            )
         }
     }
 }

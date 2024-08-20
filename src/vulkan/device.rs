@@ -38,6 +38,7 @@ pub unsafe fn create_logical_device(
     let mut indexing = vk::PhysicalDeviceDescriptorIndexingFeatures::default();
     let mut features2 = vk::PhysicalDeviceFeatures2::builder().push_next(&mut indexing);
     instance.get_physical_device_features2(physical_device, &mut features2);
+
     info!(
         "Sampled image array non uniform indexing: {}",
         indexing.shader_sampled_image_array_non_uniform_indexing
@@ -97,7 +98,9 @@ pub unsafe fn create_logical_device(
         //.descriptor_binding_uniform_buffer_update_after_bind(true);
         ;
 
-    let features = vk::PhysicalDeviceFeatures::builder().sampler_anisotropy(true);
+    let features = vk::PhysicalDeviceFeatures::builder()
+        .sampler_anisotropy(true)
+        .fill_mode_non_solid(true);
 
     let info = vk::DeviceCreateInfo::builder()
         .queue_create_infos(&queue_infos)

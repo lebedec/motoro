@@ -865,7 +865,7 @@ unsafe fn create_pipeline(
     vert: &[u8],
     frag: &[u8],
     push_constants: Vec<vk::PushConstantRange>,
-    vertex_input_state: PipelineVertexInputStateCreateInfo,
+    vertex_input: PipelineVertexInputStateCreateInfo,
 ) -> (vk::PipelineLayout, vk::Pipeline) {
     debug!("Compiles vert shader");
     let vert_shader_module = create_shader_module(device, vert);
@@ -935,7 +935,7 @@ unsafe fn create_pipeline(
     let stages = &[vert_stage, frag_stage];
     let info = vk::GraphicsPipelineCreateInfo::builder()
         .stages(stages)
-        .vertex_input_state(&vertex_input_state)
+        .vertex_input_state(&vertex_input)
         .input_assembly_state(&input_assembly_state)
         .viewport_state(&viewport_state)
         .rasterization_state(&rasterization_state)
