@@ -90,7 +90,7 @@ unsafe fn create_texture(
         vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::TRANSFER_DST,
         vk::MemoryPropertyFlags::DEVICE_LOCAL,
     );
-    info!("Performs layout transition {texture:?}");
+    debug!("Performs layout transition {texture:?}");
     transition_image_layout(
         device,
         queue,

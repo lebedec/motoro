@@ -106,6 +106,28 @@ where
     }
 }
 
+pub fn vec2_aabb(points: &[Vec2]) -> (Vec2, Vec2) {
+    let mut min_x = f32::MAX;
+    let mut max_x = f32::MIN;
+    let mut min_y = f32::MAX;
+    let mut max_y = f32::MIN;
+    for point in points {
+        if point.x() < min_x {
+            min_x = point.x();
+        }
+        if point.x() > max_x {
+            max_x = point.x();
+        }
+        if point.y() < min_y {
+            min_y = point.y();
+        }
+        if point.y() > max_y {
+            max_y = point.y();
+        }
+    }
+    ([min_x, min_y], [max_x, max_y])
+}
+
 pub trait VecSnap {
     fn snap(&self, tile: Self) -> Self;
 
