@@ -10,6 +10,8 @@ pub struct Font {
     pub size: f32,
     pub missing_char: Char,
     pub resolution_scale: f32,
+    pub line_height: f32,
+    pub baseline: f32,
 }
 
 #[repr(C)]
@@ -20,7 +22,8 @@ pub struct Char {
     pub src: Vec2,
     pub uv: Vec2,
     pub size: Vec2,
-    pub height: f32,
+    pub glyph_offset: f32,
+    pub glyph_width: f32,
 }
 
 impl Font {
@@ -31,8 +34,7 @@ impl Font {
         let scale = self.resolution_scale;
         let mut layout = Layout::new(CoordinateSystem::PositiveYDown);
         let settings = LayoutSettings {
-            // HACK: font size added to fix layout recalculation in same max_width
-            max_width: Some(max_width * scale + self.size),
+            max_width: Some(max_width * scale),
             line_height,
             ..LayoutSettings::default()
         };
@@ -46,7 +48,14 @@ impl Font {
                 Some(char) => *char,
                 None => self.missing_char,
             };
-            draw.position = [glyph.x / scale, glyph.y / scale].into();
+            draw.position = [glyph.x / scale, (glyph.y - draw.glyph_offset) / scale].into();
+            // let char = glyph.parent;
+            // if char == '$' || char == '&' || char == ',' || char == '+' || char == 'j' {
+            //     println!(
+            //         "GLYPH {char} pos{:?} gy{} goffset{}",
+            //         draw.position, glyph.y, draw.glyph_offset
+            //     );
+            // }
             draws.push(draw);
         }
         draws
@@ -56,7 +65,7 @@ impl Font {
 pub const MISSING_CHAR: char = '□';
 
 #[derive(Debug)]
-pub struct FontError(String);
+pub struct FontError(pub String);
 
 impl From<&str> for FontError {
     fn from(error: &str) -> Self {

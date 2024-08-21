@@ -99,7 +99,7 @@ impl FontLoader {
     }
 }
 
-fn ascii() -> String {
+pub(crate) fn ascii() -> String {
     let mut string = String::from(MISSING_CHAR);
     for code in 0x20..=0x7e {
         string.push(code as u8 as char);
@@ -107,7 +107,7 @@ fn ascii() -> String {
     string
 }
 
-fn cyrillic() -> String {
+pub(crate) fn cyrillic() -> String {
     let mut string = String::from(MISSING_CHAR);
     for code in 0x0400..=0x04FF {
         string.push(unsafe { char::from_u32_unchecked(code) });

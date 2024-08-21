@@ -37,7 +37,12 @@ pub(crate) fn rasterize_font_to_image_file(
     let mut offset_x = 0usize;
     let mut offset_y = 0usize;
     // rounding up is need to produce coordinates without loss of accuracy
-    let line_height = round_up_pow_2(size as usize);
+    let line_metrics = font
+        .horizontal_line_metrics(size)
+        .ok_or(FontError("line metrics unavailable".into()))?;
+    let line_height = line_metrics.new_line_size.ceil();
+    let baseline = line_height + line_metrics.descent.ceil();
+    let step_y = round_up_pow_2(line_height as usize);
     let mut charset = HashMap::new();
     let mut missing_char = Char::default();
     for char in alphabet.chars() {
@@ -45,38 +50,41 @@ pub(crate) fn rasterize_font_to_image_file(
         let step_x = round_up_pow_2(glyph.width);
         if offset_x + step_x >= w {
             offset_x = 0;
-            offset_y += line_height;
+            offset_y += step_y;
         }
+        let glyph_offset = baseline as usize - (glyph.height as i32 + glyph.ymin) as usize;
         for (index, alpha) in bitmap.iter().enumerate() {
-            let y = offset_y + index / glyph.width;
+            let y = offset_y + index / glyph.width + glyph_offset;
             let x = offset_x + index % glyph.width;
             let offset = (y * w * 4) + x * 4;
-            data[offset + 0] = 255;
-            data[offset + 1] = 255;
-            data[offset + 2] = 255;
+            data[offset + 0] = 0;
+            data[offset + 1] = 0;
+            data[offset + 2] = 0;
             data[offset + 3] = *alpha;
         }
-        // if char == '.' || char == 'y' || char == 'e' {
+        // if char == '$' || char == '&' || char == ',' || char == '+' || char == 'j' {
         //     println!(
-        //         "GLYPH {char} h{} ah{} ymin{} bymin{} bh{} lh{}",
+        //         "GLYPH {char} h{} ah{} ymin{} bymin{} bh{} lh{} goffset{}",
         //         glyph.height,
         //         glyph.advance_height,
         //         glyph.ymin,
         //         glyph.bounds.ymin,
         //         glyph.bounds.height,
-        //         line_height
+        //         step_y,
+        //         glyph_offset
         //     );
         // }
         let constants = Char {
             position: [0.0; 2],
             image: [w as f32, h as f32],
             src: [offset_x as f32 / w as f32, offset_y as f32 / h as f32],
-            uv: [step_x as f32 / w as f32, line_height as f32 / h as f32],
+            uv: [step_x as f32 / w as f32, step_y as f32 / h as f32],
             size: [
                 step_x as f32 / resolution_scale,
-                line_height as f32 / resolution_scale,
+                step_y as f32 / resolution_scale,
             ],
-            height: glyph.height as f32,
+            glyph_offset: glyph_offset as f32,
+            glyph_width: glyph.width as f32 / resolution_scale,
         };
         charset.insert(char, constants);
         if char == MISSING_CHAR {
@@ -97,6 +105,8 @@ pub(crate) fn rasterize_font_to_image_file(
         size,
         missing_char,
         resolution_scale,
+        line_height: line_height / resolution_scale,
+        baseline: baseline / resolution_scale,
     })
 }
 
@@ -112,4 +122,23 @@ fn round_up_pow_2(value: usize) -> usize {
     value |= value >> 16;
     let v = value + 1;
     v
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::fonts::{ascii, cyrillic, rasterize_font_to_image_file};
+
+    #[test]
+    pub fn test_builtin_font_rendering() {
+        let data = include_bytes!("./builtin/Roboto/Roboto-Regular.ttf");
+        rasterize_font_to_image_file(
+            data,
+            "./src/fonts/builtin/Roboto",
+            "test",
+            &ascii(),
+            16.0,
+            1.0,
+        )
+        .unwrap();
+    }
 }
