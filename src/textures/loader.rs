@@ -111,6 +111,12 @@ impl TextureLoader {
     }
 
     pub fn get_texture(&mut self, path: &str) -> Texture {
+        if path == Texture::FALLBACK {
+            return self.fallback;
+        }
+        if path == Texture::BLANK {
+            return self.blank;
+        }
         match self.records.get(path) {
             None => {
                 self.metrics.requests.inc();

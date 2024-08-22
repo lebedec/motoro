@@ -13,6 +13,11 @@ pub struct Texture {
     pub size: [u32; 2],
 }
 
+impl Texture {
+    pub const FALLBACK: &'static str = "<fallback>";
+    pub const BLANK: &'static str = "<blank>";
+}
+
 #[derive(Debug)]
 pub struct TextureError(String);
 

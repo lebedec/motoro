@@ -2,7 +2,7 @@ use crate::math::{
     mat4_from_scale, mat4_from_translation, mat4_identity, mat4_look_at_rh, mat4_mul,
     mat4_orthographic, Mat4, Vec2, Vec2u, Vec3, VecArith, VecComponents, VecNeg,
 };
-use crate::Graphics;
+use crate::{Graphics, UserInput};
 
 pub struct Camera {
     pub eye: Vec3,
@@ -10,6 +10,7 @@ pub struct Camera {
     pub zoom: f32,
     screen: Vec2,
     resolution_reference: Option<[u32; 2]>,
+    pub enabled: bool,
 }
 
 impl Camera {
@@ -20,6 +21,7 @@ impl Camera {
             zoom: 1.0,
             screen: graphics.vulkan.swapchain_image_size(),
             resolution_reference: None,
+            enabled: false,
         }
     }
 
@@ -27,6 +29,18 @@ impl Camera {
         self.screen = graphics.vulkan.swapchain_image_size();
         if let Some(reference) = self.resolution_reference {
             self.resolution_scale = self.screen.y() / reference.y() as f32;
+        }
+        if self.enabled {
+            self.control(&graphics.input)
+        }
+    }
+
+    fn control(&mut self, input: &UserInput) {
+        if input.mouse.wheel.y() > 0.0 {
+            self.zoom -= 0.05;
+        }
+        if input.mouse.wheel.y() < 0.0 {
+            self.zoom += 0.05;
         }
     }
 

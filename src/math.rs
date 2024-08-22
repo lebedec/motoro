@@ -146,11 +146,19 @@ impl<const N: usize> VecSnap for [f32; N] {
 
 pub trait VecFloor {
     fn floor(&self) -> Self;
+    fn round(&self) -> Self;
+    fn ceil(&self) -> Self;
 }
 
 impl<const N: usize> VecFloor for [f32; N] {
     fn floor(&self) -> Self {
         self.map(|value| value.floor())
+    }
+    fn round(&self) -> Self {
+        self.map(|value| value.round())
+    }
+    fn ceil(&self) -> Self {
+        self.map(|value| value.ceil())
     }
 }
 
@@ -325,6 +333,12 @@ impl<const N: usize> VecCast<u32, N> for [f32; N] {
 impl<const N: usize> VecCast<usize, N> for [f32; N] {
     fn cast(&self) -> [usize; N] {
         self.map(|value| value as usize)
+    }
+}
+
+impl<const N: usize> VecCast<isize, N> for [f32; N] {
+    fn cast(&self) -> [isize; N] {
+        self.map(|value| value as isize)
     }
 }
 
