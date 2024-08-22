@@ -15,6 +15,16 @@ pub type Vec3 = [f32; 3];
 
 pub type Vec4 = [f32; 4];
 
+pub trait VecGrid {
+    fn index_at(&self, grid: Vec2s) -> usize;
+}
+
+impl VecGrid for Vec2s {
+    fn index_at(&self, grid: Vec2s) -> usize {
+        self.x() + self.y() * grid.x()
+    }
+}
+
 trait VecResize<T> {
     fn resize<const R: usize>(self) -> [T; R];
 }
