@@ -1,7 +1,7 @@
 use crate::fonts::MISSING_CHAR;
 use crate::{Char, Font, FontError};
 use fontdue::FontSettings;
-use log::info;
+use log::{error, info};
 use std::collections::HashMap;
 use std::fs;
 use zune_png::zune_core::bit_depth::BitDepth;
@@ -46,13 +46,21 @@ pub(crate) fn rasterize_font_to_image_file(
     let mut charset = HashMap::new();
     let mut missing_char = Char::default();
     for char in alphabet.chars() {
-        let (glyph, bitmap) = font.rasterize(char, size);
+        let (mut glyph, bitmap) = font.rasterize(char, size);
         let step_x = round_up_pow_2(glyph.width);
         if offset_x + step_x >= w {
             offset_x = 0;
             offset_y += step_y;
         }
-        let glyph_offset = baseline as usize - (glyph.height as i32 + glyph.ymin) as usize;
+        // println!(
+        //     "CHAR[{char}] gh {} ymin {} baseline {baseline} lh {line_height} sub{} {line_metrics:?}",
+        //     glyph.height, glyph.ymin, (glyph.height as i32 + glyph.ymin)
+        // );
+        if glyph.height > line_height as usize {
+            // error!("unable to render glyph [{char}], height greater than line height");
+            continue;
+        }
+        let glyph_offset = (baseline as i32 - (glyph.height as i32 + glyph.ymin)) as usize;
         for (index, alpha) in bitmap.iter().enumerate() {
             let y = offset_y + index / glyph.width + glyph_offset;
             let x = offset_x + index % glyph.width;

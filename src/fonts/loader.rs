@@ -2,6 +2,7 @@ use crate::fonts::rasterize_font_to_image_file;
 use crate::math::{Vec3, VecArith, VecMagnitude};
 use crate::{Font, FontError, MISSING_CHAR};
 use log::info;
+use std::fs;
 use std::sync::{Arc, RwLock};
 
 struct Record {
@@ -49,9 +50,29 @@ impl FontLoader {
             cache: cache.to_string(),
         };
         loader
-            .load_font("system-ui", 400, "normal", 16.0, default)
+            .load_font(
+                "system-ui",
+                400,
+                "normal",
+                16.0,
+                &(ascii() + &cyrillic()),
+                default,
+            )
             .expect("default font must be loaded");
         Arc::new(RwLock::new(loader))
+    }
+
+    pub fn load_font_file(
+        &mut self,
+        family: &str,
+        weight: u16,
+        style: &str,
+        size: f32,
+        alphabet: &str,
+        path: &str,
+    ) -> Result<(), FontError> {
+        let data = fs::read(path).map_err(|error| FontError(error.to_string()))?;
+        self.load_font(family, weight, style, size, alphabet, &data)
     }
 
     pub fn load_font(
@@ -60,13 +81,14 @@ impl FontLoader {
         weight: u16,
         style: &str,
         size: f32,
+        alphabet: &str,
         data: &[u8],
     ) -> Result<(), FontError> {
         let font = rasterize_font_to_image_file(
             data,
             &self.cache,
             &format!("{family}-{weight}-{style}"),
-            &(ascii() + &cyrillic()),
+            alphabet,
             size,
             self.resolution_scale,
         )?;
@@ -99,7 +121,7 @@ impl FontLoader {
     }
 }
 
-pub(crate) fn ascii() -> String {
+pub fn ascii() -> String {
     let mut string = String::from(MISSING_CHAR);
     for code in 0x20..=0x7e {
         string.push(code as u8 as char);
@@ -107,7 +129,7 @@ pub(crate) fn ascii() -> String {
     string
 }
 
-pub(crate) fn cyrillic() -> String {
+pub fn cyrillic() -> String {
     let mut string = String::from(MISSING_CHAR);
     for code in 0x0400..=0x04FF {
         string.push(unsafe { char::from_u32_unchecked(code) });
