@@ -16,12 +16,17 @@ pub type Vec3 = [f32; 3];
 pub type Vec4 = [f32; 4];
 
 pub trait VecGrid {
-    fn index_at(&self, grid: Vec2s) -> usize;
+    fn offset_in(&self, grid: Vec2s) -> usize;
+    fn position_of(&self, index: usize) -> Vec2s;
 }
 
 impl VecGrid for Vec2s {
-    fn index_at(&self, grid: Vec2s) -> usize {
+    fn offset_in(&self, grid: Vec2s) -> usize {
         self.x() + self.y() * grid.x()
+    }
+
+    fn position_of(&self, index: usize) -> Vec2s {
+        [index % self.x(), index / self.x()]
     }
 }
 
