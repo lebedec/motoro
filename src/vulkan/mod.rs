@@ -1014,6 +1014,13 @@ impl MemoryBuffer {
             device.unmap_memory(self.memory);
         }
     }
+
+    pub fn destroy(&self, device: &Device) {
+        unsafe {
+            device.destroy_buffer(self.handle, None);
+            device.free_memory(self.memory, None);
+        }
+    }
 }
 
 pub unsafe fn create_buffers(

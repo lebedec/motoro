@@ -188,7 +188,7 @@ impl Program {
         }
     }
 
-    pub fn draw_mesh(&self, vertices: Vertices) {
+    pub fn draw_sub_mesh(&self, vertices: Vertices) {
         unsafe {
             self.device.cmd_draw(
                 self.current_commands,

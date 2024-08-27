@@ -1,25 +1,60 @@
+use crate::math::{VecArith, VecCast, VecComponents};
 use crate::Camera;
 use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use sdl2::sys;
+use std::collections::HashSet;
 use std::mem;
+use std::time::{Duration, Instant};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct UserInput {
     pub mouse: MouseInput,
+    pub keys: KeysInput,
     pub events: Vec<Event>,
+    pub time: Duration,
+    timestamp: Instant,
+}
+
+impl Default for UserInput {
+    fn default() -> Self {
+        Self {
+            mouse: MouseInput::default(),
+            keys: KeysInput::default(),
+            events: vec![],
+            time: Duration::default(),
+            timestamp: Instant::now(),
+        }
+    }
 }
 
 impl UserInput {
     pub(crate) fn clear(&mut self) {
+        self.time = self.timestamp.elapsed();
+        self.timestamp = Instant::now();
         self.mouse.left.click = false;
         self.mouse.right.click = false;
         self.mouse.wheel = [0.0; 2];
+        self.keys.pressed.clear();
         self.events.clear();
     }
 
     pub(crate) fn handle(&mut self, event: Event) {
         match &event {
+            Event::KeyDown {
+                keycode: Some(keycode),
+                ..
+            } => {
+                self.keys.down.insert(*keycode);
+            }
+            Event::KeyUp {
+                keycode: Some(keycode),
+                ..
+            } => {
+                self.keys.down.remove(keycode);
+                self.keys.pressed.insert(*keycode);
+            }
             Event::MouseMotion { x, y, .. } => {
                 self.mouse.raw = [*x, *y];
             }
@@ -53,6 +88,12 @@ impl UserInput {
 }
 
 #[derive(Debug, Default, Clone)]
+pub struct KeysInput {
+    pub down: HashSet<Keycode>,
+    pub pressed: HashSet<Keycode>,
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct MouseInput {
     pub raw: [i32; 2],
     pub wheel: [f32; 2],
@@ -62,11 +103,11 @@ pub struct MouseInput {
 
 impl MouseInput {
     pub fn position(&self, camera: &Camera) -> [f32; 2] {
-        let [x, y] = self.raw;
-        [
-            x as f32 / camera.resolution_scale,
-            y as f32 / camera.resolution_scale,
-        ]
+        self.raw
+            .cast()
+            .div(camera.resolution_scale)
+            .div(camera.zoom)
+            .add(camera.eye.xy())
     }
 }
 

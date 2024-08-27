@@ -1,7 +1,8 @@
 use std::io;
 
 use crate::math::Vec2;
-use vulkanalia::vk;
+use vulkanalia::vk::DeviceV1_0;
+use vulkanalia::{vk, Device};
 use zune_png::error::PngDecodeErrors;
 
 /// TODO: abstract away from Vulkan handles
@@ -36,5 +37,15 @@ impl From<io::Error> for TextureError {
 impl From<PngDecodeErrors> for TextureError {
     fn from(error: PngDecodeErrors) -> Self {
         TextureError(error.to_string())
+    }
+}
+
+impl Texture {
+    pub fn destroy(&self, device: &Device) {
+        unsafe {
+            device.destroy_image_view(self.view, None);
+            device.destroy_image(self.image, None);
+            device.free_memory(self.memory, None);
+        }
     }
 }

@@ -1,27 +1,35 @@
 use crate::math::{
     mat4_from_scale, mat4_from_translation, mat4_identity, mat4_look_at_rh, mat4_mul,
-    mat4_orthographic, Mat4, Vec2, Vec2u, Vec3, VecArith, VecComponents, VecNeg,
+    mat4_orthographic, Mat4, Vec2, Vec2u, Vec3, VecArith, VecComponents, VecMagnitude, VecNeg,
 };
 use crate::{Graphics, UserInput};
+use sdl2::keyboard::Keycode;
+use sdl2::sys::KeyCode;
 
 pub struct Camera {
     pub eye: Vec3,
+    pub eye_target: Vec3,
     pub resolution_scale: f32,
     pub zoom: f32,
     screen: Vec2,
     resolution_reference: Option<[u32; 2]>,
     pub enabled: bool,
+    pub control_speed: f32,
+    pub speed: f32,
 }
 
 impl Camera {
     pub fn create(graphics: &Graphics) -> Self {
         Self {
-            eye: Default::default(),
+            eye: [0.0; 3],
+            eye_target: [0.0; 3],
             resolution_scale: 1.0,
             zoom: 1.0,
             screen: graphics.vulkan.swapchain_image_size(),
             resolution_reference: None,
             enabled: false,
+            control_speed: 100.0,
+            speed: 100.0,
         }
     }
 
@@ -42,6 +50,38 @@ impl Camera {
         if input.mouse.wheel.y() < 0.0 {
             self.zoom += 0.05;
         }
+        let mut delta = [0.0, 0.0, 0.0];
+        if input.keys.down.contains(&Keycode::W) {
+            delta[1] -= 1.0;
+        }
+        if input.keys.down.contains(&Keycode::A) {
+            delta[0] -= 1.0;
+        }
+        if input.keys.down.contains(&Keycode::S) {
+            delta[1] += 1.0;
+        }
+        if input.keys.down.contains(&Keycode::D) {
+            delta[0] += 1.0;
+        }
+        let time = input.time.as_secs_f32();
+        let delta = delta.normal().mul(time * self.control_speed);
+
+        self.eye_target = self.eye_target.add(delta);
+        let direction = self.eye_target.sub(self.eye);
+
+        let distance = direction.magnitude();
+        let step = self.speed * time;
+        if distance < step {
+            self.eye = self.eye_target;
+        } else {
+            let direction = direction.normal();
+            self.eye = self.eye.add(direction.mul(step))
+        }
+    }
+
+    pub fn reset_transform(&mut self) {
+        self.eye = [0.0; 3];
+        self.zoom = 1.0;
     }
 
     pub fn viewport(&self) -> Vec2 {

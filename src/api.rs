@@ -36,6 +36,10 @@ impl Graphics {
         unsafe { Mesh::create(&self.vulkan, n) }
     }
 
+    pub fn texture_from(&self, width: u32, height: u32, data: &[u8]) -> Texture {
+        self.textures.create_texture(width, height, data)
+    }
+
     pub fn create_pixel_perfect_sampler(&self) -> vk::Sampler {
         let info = vk::SamplerCreateInfo::builder()
             .mag_filter(vk::Filter::NEAREST)
@@ -92,6 +96,14 @@ impl Graphics {
 
     pub fn chain(&self) -> usize {
         self.vulkan.chain
+    }
+
+    pub fn destroy_texture(&self, texture: Texture) {
+        texture.destroy(&self.vulkan.device);
+    }
+
+    pub fn destroy_mesh(&self, mesh: &Mesh) {
+        mesh.destroy();
     }
 }
 

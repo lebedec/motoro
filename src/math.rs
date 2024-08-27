@@ -15,18 +15,61 @@ pub type Vec3 = [f32; 3];
 
 pub type Vec4 = [f32; 4];
 
+pub trait VecBorder<T> {
+    fn on_border(self, grid: Self, border: T) -> bool;
+}
+
+impl<T, const N: usize> VecBorder<T> for [T; N]
+where
+    T: Copy + Sub<Output = T> + PartialOrd,
+{
+    fn on_border(self, grid: Self, border: T) -> bool {
+        for component in 0..self.len() {
+            if self[component] < border || self[component] >= grid[component] - border {
+                return true;
+            }
+        }
+        false
+    }
+}
+
 pub trait VecGrid {
-    fn offset_in(&self, grid: Vec2s) -> usize;
+    fn as_index(&self, grid: Vec2s) -> usize;
     fn position_of(&self, index: usize) -> Vec2s;
+    fn border(&self, width: usize) -> Vec<Vec2s>;
+    fn cells(&self) -> Vec<Vec2s>;
 }
 
 impl VecGrid for Vec2s {
-    fn offset_in(&self, grid: Vec2s) -> usize {
+    fn as_index(&self, grid: Vec2s) -> usize {
         self.x() + self.y() * grid.x()
     }
 
     fn position_of(&self, index: usize) -> Vec2s {
         [index % self.x(), index / self.x()]
+    }
+
+    fn border(&self, b: usize) -> Vec<Vec2s> {
+        let mut border = vec![];
+        let [w, h] = *self;
+        for y in 0..h {
+            for x in 0..w {
+                if (y < b || y >= h - b) || (x < b || x >= w - b) {
+                    border.push([x, y])
+                }
+            }
+        }
+        border
+    }
+
+    fn cells(&self) -> Vec<Vec2s> {
+        let mut tiles = Vec::with_capacity(self.space());
+        for y in 0..self.y() {
+            for x in 0..self.x() {
+                tiles.push([x, y])
+            }
+        }
+        tiles
     }
 }
 

@@ -1,3 +1,9 @@
+use crate::math::{Vec2, Vec3, Vec4, VecArith, VecComponents};
+use crate::vulkan::{
+    create_buffer, create_buffers, create_descriptor_pool, create_descriptor_set_layout,
+    create_descriptors, get_memory_type_index, MemoryBuffer, Vulkan,
+};
+use crate::Colors;
 use log::error;
 use sdl2::mouse::SystemCursor::No;
 use vulkanalia::vk::{
@@ -8,18 +14,12 @@ use vulkanalia::vk::{
 };
 use vulkanalia::{vk, Device, Instance};
 
-use crate::math::{Vec2, Vec3, Vec4};
-use crate::vulkan::{
-    create_buffer, create_buffers, create_descriptor_pool, create_descriptor_set_layout,
-    create_descriptors, get_memory_type_index, MemoryBuffer, Vulkan,
-};
-
 /// Represents GLSL vertices static buffer.
 pub struct Mesh {
-    pub(crate) buffers: Vec<MemoryBuffer>,
+    pub buffers: Vec<MemoryBuffer>,
     device: Device,
-    vertices: Vec<Vertex>,
-    cursor: usize,
+    pub vertices: Vec<Vertex>,
+    pub cursor: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -29,6 +29,37 @@ pub struct Vertices {
 }
 
 impl Mesh {
+    pub fn add_rect(&mut self, start: Vec2, size: Vec2, color: impl Colors) -> Option<Vertices> {
+        let a = start;
+        let b = start.add([size.x(), 0.0]);
+        let c = start.add(size);
+        let d = start.add([0.0, size.y()]);
+        self.add_polygon(&[a, b, c, a, c, d], color)
+    }
+
+    pub fn add_polygon(&mut self, vertices: &[Vec2], color: impl Colors) -> Option<Vertices> {
+        let color = color.to_vec4();
+        let mut vertices: Vec<Vertex> = vertices
+            .iter()
+            .map(|position| Vertex {
+                position: *position,
+                color,
+                uv: [0.0, 0.0],
+            })
+            .collect();
+        if vertices.len() > 3 {
+            // default renderer uses TRIANGLES_LIST mode
+            let mut triangles = vec![];
+            for n in 2..vertices.len() {
+                triangles.push(vertices[0]);
+                triangles.push(vertices[n - 1]);
+                triangles.push(vertices[n])
+            }
+            vertices = triangles;
+        }
+        self.append(&vertices)
+    }
+
     pub unsafe fn create(vulkan: &Vulkan, n: usize) -> Self {
         let device = vulkan.device.clone();
         let frames = vulkan.swapchain.images.len();
@@ -66,6 +97,13 @@ impl Mesh {
         Some(Vertices { ptr, len })
     }
 
+    pub fn update_all(&mut self) {
+        // TODO: single buffer, no swapchain
+        for chain in 0..self.buffers.len() {
+            self.update(chain);
+        }
+    }
+
     pub fn update(&mut self, frame: usize) -> usize {
         let value = self.vertices.as_slice();
         let count = self.cursor;
@@ -87,6 +125,12 @@ impl Mesh {
                 .expect("memory must be mapped");
             std::ptr::copy_nonoverlapping(value.as_ptr(), memory.cast(), value.len());
             self.device.unmap_memory(self.buffers[frame].memory);
+        }
+    }
+
+    pub fn destroy(&self) {
+        for buffer in &self.buffers {
+            buffer.destroy(&self.device);
         }
     }
 }
