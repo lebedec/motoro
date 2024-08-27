@@ -224,21 +224,40 @@ pub trait VecNeighbors<T>
 where
     Self: Sized,
 {
-    fn subgrid(&self, radius: usize, grid: Self) -> Vec<Self>;
+    fn circle(&self, radius: usize, grid: Self) -> Vec<Self>;
+    fn cross(&self, grid: Self) -> Vec<Self>;
 }
 
 impl VecNeighbors<usize> for Vec2s {
-    fn subgrid(&self, radius: usize, grid: Vec2s) -> Vec<Vec2s> {
+    fn circle(&self, radius: usize, grid: Vec2s) -> Vec<Vec2s> {
         let [cx, cy] = *self;
-        let min_y = cy - radius.min(cy);
+        let min_y = if radius >= cy { 0 } else { cy - radius };
         let max_y = (cy + radius + 1).min(grid.y());
-        let min_x = cx - radius.min(cx);
-        let max_x = (cx + radius + 1).max(grid.x());
+        let min_x = if radius >= cx { 0 } else { cx - radius };
+        let max_x = (cx + radius + 1).min(grid.x());
         let mut result = vec![];
         for y in min_y..max_y {
             for x in min_x..max_x {
                 result.push([x, y])
             }
+        }
+        result
+    }
+
+    fn cross(&self, grid: Self) -> Vec<Self> {
+        let [x, y] = *self;
+        let mut result = vec![];
+        if x > 0 {
+            result.push([x - 1, y])
+        }
+        if y > 0 {
+            result.push([x, y - 1])
+        }
+        if x + 1 < grid.x() {
+            result.push([x + 1, y])
+        }
+        if y + 1 < grid.y() {
+            result.push([x, y + 1])
         }
         result
     }

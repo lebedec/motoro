@@ -40,6 +40,11 @@ impl GraphicsConfig {
         self.resolution = resolution;
         self
     }
+
+    pub fn position(mut self, position: [i32; 2]) -> Self {
+        self.position = Some(position);
+        self
+    }
 }
 
 #[derive(Clone, Copy, Debug, serde::Deserialize)]
