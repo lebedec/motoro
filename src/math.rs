@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, Div, Mul, Neg, Range, Sub};
 
 /// Math module is designed for simple vector and matrix processing.
 /// Therefore, almost all of its operators are overloaded to perform standard operations as defined
@@ -14,6 +14,20 @@ pub type Vec2s = [usize; 2];
 pub type Vec3 = [f32; 3];
 
 pub type Vec4 = [f32; 4];
+
+pub trait VecRange<T> {
+    fn range(self) -> Range<T>;
+}
+
+impl<T> VecRange<T> for [T; 2]
+where
+    T: Copy,
+{
+    #[inline(always)]
+    fn range(self) -> Range<T> {
+        self[0]..self[1]
+    }
+}
 
 pub trait VecBorder<T> {
     fn on_border(self, grid: Self, border: T) -> bool;
@@ -413,6 +427,12 @@ impl<const N: usize> VecCast<usize, N> for [f32; N] {
     }
 }
 
+impl<const N: usize> VecCast<usize, N> for [i32; N] {
+    fn cast(&self) -> [usize; N] {
+        self.map(|value| value as usize)
+    }
+}
+
 impl<const N: usize> VecCast<isize, N> for [f32; N] {
     fn cast(&self) -> [isize; N] {
         self.map(|value| value as isize)
@@ -428,6 +448,12 @@ impl<const N: usize> VecCast<f32, N> for [usize; N] {
 impl<const N: usize> VecCast<isize, N> for [usize; N] {
     fn cast(&self) -> [isize; N] {
         self.map(|value| value as isize)
+    }
+}
+
+impl<const N: usize> VecCast<i32, N> for [usize; N] {
+    fn cast(&self) -> [i32; N] {
+        self.map(|value| value as i32)
     }
 }
 

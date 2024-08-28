@@ -29,12 +29,14 @@ pub struct Vertices {
 }
 
 impl Mesh {
+    pub const RECT_VERTICES_N: usize = 6;
+
     pub fn add_rect(&mut self, start: Vec2, size: Vec2, color: impl Colors) -> Option<Vertices> {
         let a = start;
         let b = start.add([size.x(), 0.0]);
         let c = start.add(size);
         let d = start.add([0.0, size.y()]);
-        self.add_polygon(&[a, b, c, a, c, d], color)
+        self.add_polygon(&[a, b, c, d], color)
     }
 
     pub fn add_polygon(&mut self, vertices: &[Vec2], color: impl Colors) -> Option<Vertices> {
@@ -89,7 +91,7 @@ impl Mesh {
     pub fn append(&mut self, vertices: &[Vertex]) -> Option<Vertices> {
         let ptr = self.cursor;
         let len = vertices.len();
-        if ptr + len >= self.vertices.len() {
+        if ptr + len > self.vertices.len() {
             return None;
         }
         self.vertices[ptr..ptr + len].copy_from_slice(vertices);
