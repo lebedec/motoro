@@ -47,18 +47,26 @@ where
     }
 }
 
+pub trait VecIndexer<T> {
+    fn as_index(&self, grid: Self) -> T;
+}
+
+impl<T> VecIndexer<T> for [T; 2]
+where
+    T: Copy + Mul<Output = T> + Add<Output = T>,
+{
+    fn as_index(&self, grid: Self) -> T {
+        self[0] + self[1] * grid[0]
+    }
+}
+
 pub trait VecGrid {
-    fn as_index(&self, grid: Vec2s) -> usize;
     fn position_of(&self, index: usize) -> Vec2s;
     fn border(&self, width: usize) -> Vec<Vec2s>;
     fn cells(&self) -> Vec<Vec2s>;
 }
 
 impl VecGrid for Vec2s {
-    fn as_index(&self, grid: Vec2s) -> usize {
-        self.x() + self.y() * grid.x()
-    }
-
     fn position_of(&self, index: usize) -> Vec2s {
         [index % self.x(), index / self.x()]
     }
@@ -418,6 +426,12 @@ pub trait VecCast<T, const N: usize> {
 impl<const N: usize> VecCast<u32, N> for [f32; N] {
     fn cast(&self) -> [u32; N] {
         self.map(|value| value as u32)
+    }
+}
+
+impl<const N: usize> VecCast<i32, N> for [f32; N] {
+    fn cast(&self) -> [i32; N] {
+        self.map(|value| value as i32)
     }
 }
 
