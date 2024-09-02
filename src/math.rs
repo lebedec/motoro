@@ -123,6 +123,7 @@ pub trait VecComponents<T> {
     fn a(&self) -> T;
     fn xy(&self) -> [T; 2];
     fn xyz(&self) -> [T; 3];
+    fn wh(&self) -> [T; 2];
     fn rgb(&self) -> [T; 3];
 }
 
@@ -178,6 +179,10 @@ where
     #[inline(always)]
     fn xyz(&self) -> [T; 3] {
         [self[0], self[1], self[2]]
+    }
+
+    fn wh(&self) -> [T; 2] {
+        [self[2], self[3]]
     }
 
     #[inline(always)]

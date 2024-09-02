@@ -1,4 +1,4 @@
-use crate::math::{VecArith, VecCast, VecComponents};
+use crate::math::{VecArith, VecCast, VecComponents, VecMagnitude};
 use crate::Camera;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -91,6 +91,25 @@ impl UserInput {
 pub struct KeysInput {
     pub down: HashSet<Keycode>,
     pub pressed: HashSet<Keycode>,
+}
+
+impl KeysInput {
+    pub fn wasd_xy_direction(&self) -> [f32; 2] {
+        let mut delta = [0.0, 0.0];
+        if self.down.contains(&Keycode::W) {
+            delta[1] -= 1.0;
+        }
+        if self.down.contains(&Keycode::A) {
+            delta[0] -= 1.0;
+        }
+        if self.down.contains(&Keycode::S) {
+            delta[1] += 1.0;
+        }
+        if self.down.contains(&Keycode::D) {
+            delta[0] += 1.0;
+        };
+        delta.normal()
+    }
 }
 
 #[derive(Debug, Default, Clone)]
