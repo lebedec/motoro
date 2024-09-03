@@ -15,6 +15,25 @@ pub type Vec3 = [f32; 3];
 
 pub type Vec4 = [f32; 4];
 
+pub trait VecMovement
+where
+    Self: Sized,
+{
+    fn move_towards(self, target: Self, delta: f32) -> Option<Self>;
+}
+
+impl VecMovement for Vec2 {
+    fn move_towards(self, target: Self, delta: f32) -> Option<Self> {
+        let distance = target.sub(self);
+        if distance.sqr_magnitude() < delta * delta {
+            None
+        } else {
+            let delta = distance.normal().mul(delta);
+            Some(self.add(delta))
+        }
+    }
+}
+
 pub trait VecRange<T> {
     fn range(self) -> Range<T>;
 }

@@ -11,35 +11,50 @@ pub struct Camera {
     pub eye_target: Vec3,
     pub resolution_scale: f32,
     pub zoom: f32,
-    screen: Vec2,
+    pub screen: Vec2,
     resolution_reference: Option<[u32; 2]>,
     pub enabled: bool,
     pub control_speed: f32,
     pub speed: f32,
+    proj: Mat4,
+    view: Mat4,
 }
 
 impl Camera {
     pub fn create(graphics: &Graphics) -> Self {
-        Self {
+        let mut camera = Self {
             eye: [0.0; 3],
             eye_target: [0.0; 3],
             resolution_scale: 1.0,
             zoom: 1.0,
-            screen: graphics.vulkan.swapchain_image_size(),
+            screen: [0.0; 2],
             resolution_reference: None,
             enabled: false,
             control_speed: 100.0,
             speed: 100.0,
-        }
+            proj: mat4_identity(),
+            view: mat4_identity(),
+        };
+        camera.update_screen(graphics.vulkan.swapchain_image_size());
+        camera
     }
 
     pub fn update(&mut self, graphics: &Graphics) {
-        self.screen = graphics.vulkan.swapchain_image_size();
+        self.update_screen(graphics.vulkan.swapchain_image_size());
         if let Some(reference) = self.resolution_reference {
             self.resolution_scale = self.screen.y() / reference.y() as f32;
         }
         if self.enabled {
             self.control(&graphics.input)
+        }
+    }
+
+    fn update_screen(&mut self, screen: Vec2) {
+        if screen != self.screen {
+            self.screen = screen;
+            let [width, height] = self.screen;
+            self.proj = mat4_orthographic(0.0, width, 0.0, height, 0.0, 1.0);
+            self.view = mat4_look_at_rh([0.0, 0.0, 1.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
         }
     }
 
@@ -79,11 +94,6 @@ impl Camera {
         }
     }
 
-    pub fn reset_transform(&mut self) {
-        self.eye = [0.0; 3];
-        self.zoom = 1.0;
-    }
-
     pub fn viewport(&self) -> Vec2 {
         self.screen.div(self.resolution_scale)
     }
@@ -99,19 +109,34 @@ impl Camera {
         self.eye.neg()
     }
 
+    pub fn center(&self) -> Vec3 {
+        let [x, y, _] = self.scaling();
+        [self.screen.x() / x, self.screen.y() / y, 0.0].mul(0.5)
+    }
+
     pub fn scaling(&self) -> Vec3 {
         [self.resolution_scale, self.resolution_scale, 1.0].mul(self.zoom)
     }
 
     pub fn get_transform(&self) -> Transform {
-        let [width, height] = self.screen;
-        let proj = mat4_orthographic(0.0, width, 0.0, height, 0.0, 1.0);
-        let view = mat4_look_at_rh([0.0, 0.0, 1.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
         let model = mat4_mul(
             mat4_from_scale(self.scaling()),
             mat4_from_translation(self.offset()),
         );
-        Transform { model, view, proj }
+        Transform {
+            model,
+            view: self.view,
+            proj: self.proj,
+        }
+    }
+
+    pub fn get_screen_transform(&self) -> Transform {
+        let model = mat4_from_scale([self.resolution_scale, self.resolution_scale, 1.0]);
+        Transform {
+            model,
+            view: self.view,
+            proj: self.proj,
+        }
     }
 }
 
