@@ -1,5 +1,6 @@
 use crate::math::{Vec2, Vec4};
-use fontdue::layout::{CoordinateSystem, Layout, LayoutSettings, TextStyle};
+pub use fontdue::layout::LayoutSettings;
+use fontdue::layout::{CoordinateSystem, Layout, TextStyle};
 use std::collections::HashMap;
 use std::io;
 
