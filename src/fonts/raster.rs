@@ -65,9 +65,9 @@ pub(crate) fn rasterize_font_to_image_file(
             let y = offset_y + index / glyph.width + glyph_offset;
             let x = offset_x + index % glyph.width;
             let offset = (y * w * 4) + x * 4;
-            data[offset + 0] = 0;
-            data[offset + 1] = 0;
-            data[offset + 2] = 0;
+            data[offset + 0] = 255;
+            data[offset + 1] = 255;
+            data[offset + 2] = 255;
             data[offset + 3] = *alpha;
         }
         // if char == '$' || char == '&' || char == ',' || char == '+' || char == 'j' {
