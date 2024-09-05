@@ -70,7 +70,7 @@ impl FontLoader {
         size: f32,
         alphabet: &str,
         path: &str,
-    ) -> Result<(), FontError> {
+    ) -> Result<&Font, FontError> {
         let data = fs::read(path).map_err(|error| FontError(error.to_string()))?;
         self.load_font(family, weight, style, size, alphabet, &data)
     }
@@ -83,7 +83,7 @@ impl FontLoader {
         size: f32,
         alphabet: &str,
         data: &[u8],
-    ) -> Result<(), FontError> {
+    ) -> Result<&Font, FontError> {
         let font = rasterize_font_to_image_file(
             data,
             &self.cache,
@@ -99,7 +99,7 @@ impl FontLoader {
             size,
             font,
         });
-        Ok(())
+        Ok(&self.registry[self.registry.len() - 1].font)
     }
 
     pub fn match_font(&self, family: &str, weight: u16, style: &str, size: f32) -> &Font {

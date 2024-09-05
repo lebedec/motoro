@@ -13,8 +13,10 @@ impl Graphics {
         ImageSampler::create(&self.vulkan.device, 100)
     }
 
-    pub fn camera(&self) -> Camera {
-        Camera::create(self)
+    pub fn camera(&mut self) -> Box<Camera> {
+        let mut camera = Box::new(Camera::create(self));
+        self.vulkan.register_camera(&mut camera);
+        camera
     }
 
     pub fn sampler(&self, slot: u32, binding: u32) -> Textures {

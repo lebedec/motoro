@@ -25,8 +25,6 @@ use vulkanalia::{vk, Device, Entry, Instance, Version};
 use zune_png::error::PngDecodeErrors;
 use zune_png::PngDecoder;
 
-use mesura::{Counter, Gauge, GaugeValue};
-
 use crate::camera::Camera;
 use crate::math::{
     mat4_from_scale, mat4_from_translation, mat4_identity, mat4_look_at_rh, mat4_mul,
@@ -36,6 +34,8 @@ use crate::textures::{Texture, TextureLoader};
 use crate::vulkan::device::create_logical_device;
 use crate::vulkan::textures::VulkanTextureLoaderDevice;
 use crate::{Mesh, Program, Shader, Storage, Uniform};
+use mesura::{Counter, Gauge, GaugeValue};
+use sdl2::sys::Atom;
 
 mod device;
 pub mod program;
@@ -60,6 +60,7 @@ pub struct Vulkan {
     pub(crate) chain: usize,
     need_resize: bool,
     programs: Vec<AtomicPtr<Program>>,
+    cameras: Vec<AtomicPtr<Camera>>,
     start: Instant,
     command_pool: vk::CommandPool,
     command_buffers: Vec<vk::CommandBuffer>,
@@ -191,6 +192,7 @@ impl Vulkan {
             sync,
             need_resize: false,
             programs: vec![],
+            cameras: vec![],
             start: Instant::now(),
             command_pool,
             command_buffers,
@@ -222,6 +224,11 @@ impl Vulkan {
         self.programs.push(ptr);
     }
 
+    pub fn register_camera(&mut self, camera: &mut Box<Camera>) {
+        let ptr = AtomicPtr::new(camera.as_mut());
+        self.cameras.push(ptr);
+    }
+
     pub fn update(&mut self) {
         #[cfg(debug_assertions)]
         {
@@ -241,6 +248,18 @@ impl Vulkan {
         unsafe {
             let mut values = vec![];
             for ptr in &self.programs {
+                let ptr = ptr.load(Ordering::Relaxed);
+                let value = &mut *ptr;
+                values.push(value);
+            }
+            values
+        }
+    }
+
+    pub fn cameras(&self) -> Vec<&mut Camera> {
+        unsafe {
+            let mut values = vec![];
+            for ptr in &self.cameras {
                 let ptr = ptr.load(Ordering::Relaxed);
                 let value = &mut *ptr;
                 values.push(value);
@@ -420,6 +439,9 @@ impl Vulkan {
         self.device.device_wait_idle().expect("device must be idle");
         for program in self.programs() {
             program.recreate(&self.swapchain, self.render_pass);
+        }
+        for camera in self.cameras() {
+            camera.update(self);
         }
         self.sync
             .images

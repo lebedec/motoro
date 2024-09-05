@@ -2,6 +2,7 @@ use crate::math::{
     mat4_from_scale, mat4_from_translation, mat4_identity, mat4_look_at_rh, mat4_mul,
     mat4_orthographic, Mat4, Vec2, Vec2u, Vec3, VecArith, VecComponents, VecMagnitude, VecNeg,
 };
+use crate::vulkan::Vulkan;
 use crate::{Graphics, UserInput};
 use sdl2::keyboard::Keycode;
 use sdl2::sys::KeyCode;
@@ -39,13 +40,26 @@ impl Camera {
         camera
     }
 
-    pub fn update(&mut self, graphics: &Graphics) {
-        self.update_screen(graphics.vulkan.swapchain_image_size());
+    pub fn enabled(mut self, enabled: bool) -> Self {
+        self.enabled = enabled;
+        self
+    }
+
+    pub fn speed(mut self, speed: f32) -> Self {
+        self.speed = speed;
+        self.control_speed = speed;
+        self
+    }
+
+    pub fn reference(mut self, resolution: Vec2u) -> Self {
+        self.resolution_reference = Some(resolution);
+        self
+    }
+
+    pub(crate) fn update(&mut self, vulkan: &Vulkan) {
+        self.update_screen(vulkan.swapchain_image_size());
         if let Some(reference) = self.resolution_reference {
             self.resolution_scale = self.screen.y() / reference.y() as f32;
-        }
-        if self.enabled {
-            self.control(&graphics.input)
         }
     }
 
@@ -58,7 +72,7 @@ impl Camera {
         }
     }
 
-    fn control(&mut self, input: &UserInput) {
+    pub fn control(&mut self, input: &UserInput) {
         if input.mouse.wheel.y() > 0.0 {
             self.zoom -= 0.05;
         }
@@ -98,10 +112,6 @@ impl Camera {
         self.screen.div(self.resolution_scale)
     }
 
-    pub fn reference(&mut self, resolution: Vec2u) {
-        self.resolution_reference = Some(resolution);
-    }
-
     pub fn offset(&self) -> Vec3 {
         // floor makes camera coordinates int
         // it eliminates artifacts of pixel perfect for now
@@ -109,7 +119,7 @@ impl Camera {
         self.eye.neg()
     }
 
-    pub fn center(&self) -> Vec3 {
+    fn half_screen(&self) -> Vec3 {
         let [x, y, _] = self.scaling();
         [self.screen.x() / x, self.screen.y() / y, 0.0].mul(0.5)
     }
@@ -117,6 +127,12 @@ impl Camera {
     pub fn scaling(&self) -> Vec3 {
         [self.resolution_scale, self.resolution_scale, 1.0].mul(self.zoom)
     }
+
+    pub fn look_at(&mut self, eye: Vec2) {
+        self.eye = [eye.x(), eye.y(), 0.0].sub(self.half_screen());
+    }
+
+    pub fn center2(&self) {}
 
     pub fn get_transform(&self) -> Transform {
         let model = mat4_mul(
