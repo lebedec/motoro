@@ -107,7 +107,7 @@ impl Textures {
                     .build();
                 let write = vk::WriteDescriptorSet::builder()
                     .dst_set(self.set)
-                    .dst_binding(0)
+                    .dst_binding(self.binding)
                     .dst_array_element(index)
                     .descriptor_type(DescriptorType::COMBINED_IMAGE_SAMPLER)
                     .image_info(&[image])

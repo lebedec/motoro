@@ -1,18 +1,17 @@
-use crate::math::{Vec2, Vec3, Vec4, VecArith, VecComponents};
+use crate::math::{Vec2, Vec4, VecArith, VecComponents};
 use crate::vulkan::{
-    create_buffer, create_buffers, create_descriptor_pool, create_descriptor_set_layout,
-    create_descriptors, get_memory_type_index, MemoryBuffer, Vulkan,
+    create_buffers, get_memory_type_index, MemoryBuffer, Vulkan,
 };
 use crate::Colors;
-use log::error;
-use sdl2::mouse::SystemCursor::No;
+
+
 use vulkanalia::vk::{
-    BufferCreateInfo, BufferUsageFlags, DescriptorType, DeviceV1_0, Format, HasBuilder,
+    BufferCreateInfo, BufferUsageFlags, DeviceV1_0, Format, HasBuilder,
     InstanceV1_0, MemoryAllocateInfo, MemoryMapFlags, MemoryPropertyFlags, PhysicalDevice,
-    PipelineVertexInputStateCreateInfo, ShaderStageFlags, SharingMode,
+    PipelineVertexInputStateCreateInfo, SharingMode,
     VertexInputAttributeDescription, VertexInputBindingDescription, VertexInputRate,
 };
-use vulkanalia::{vk, Device, Instance};
+use vulkanalia::{Device, Instance};
 
 /// Represents GLSL vertices static buffer.
 pub struct Mesh {

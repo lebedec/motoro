@@ -1,4 +1,4 @@
-use crate::math::{Vec2, Vec4};
+use crate::math::{Vec2};
 pub use fontdue::layout::LayoutSettings;
 use fontdue::layout::{CoordinateSystem, Layout, TextStyle};
 use std::collections::HashMap;

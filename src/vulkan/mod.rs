@@ -1,41 +1,28 @@
 use log::{debug, error, info, trace, warn};
 use sdl2::video::Window;
-use std::collections::{HashMap, HashSet};
-use std::convert::Into;
-use std::env::var;
+use std::collections::HashSet;
+
 use std::ffi::{c_void, CStr};
-use std::marker::PhantomData;
+
 use std::sync::atomic::{AtomicPtr, Ordering};
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant, SystemTime};
-use std::{env, fmt, fs, io, thread};
+
+use std::{env, fmt};
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::loader::{LibloadingLoader, LIBRARY};
 use vulkanalia::vk::{
-    Buffer, DescriptorImageInfo, DescriptorPoolCreateFlags, DescriptorSet,
-    DescriptorSetLayoutCreateFlags, DescriptorType, DeviceV1_0, EntryV1_0, InstanceV1_0,
-    InstanceV1_1, KhrSwapchainExtension, PhysicalDeviceDescriptorIndexingProperties,
-    PhysicalDeviceProperties2, PipelineVertexInputStateCreateInfo, Sampler, ShaderStageFlags,
-    WriteDescriptorSet,
+    DeviceV1_0, EntryV1_0, InstanceV1_0, InstanceV1_1, KhrSwapchainExtension,
+    PhysicalDeviceDescriptorIndexingProperties, PhysicalDeviceProperties2,
+    PipelineVertexInputStateCreateInfo,
 };
 use vulkanalia::vk::{ExtDebugUtilsExtension, Handle, HasBuilder};
 use vulkanalia::vk::{KhrSurfaceExtension, PhysicalDevice};
 use vulkanalia::{vk, Device, Entry, Instance, Version};
-use zune_png::error::PngDecodeErrors;
-use zune_png::PngDecoder;
 
 use crate::camera::Camera;
-use crate::math::{
-    mat4_from_scale, mat4_from_translation, mat4_identity, mat4_look_at_rh, mat4_mul,
-    mat4_orthographic, mat4_prepend_scale, Mat4, Vec2, Vec3,
-};
-use crate::textures::{Texture, TextureLoader};
+
 use crate::vulkan::device::create_logical_device;
 use crate::vulkan::textures::VulkanTextureLoaderDevice;
-use crate::{Mesh, Program, Shader, Storage, Uniform};
-use mesura::{Counter, Gauge, GaugeValue};
-use sdl2::sys::Atom;
+use crate::Program;
 
 mod device;
 pub mod program;
@@ -61,8 +48,6 @@ pub struct Vulkan {
     need_resize: bool,
     programs: Vec<AtomicPtr<Program>>,
     cameras: Vec<AtomicPtr<Camera>>,
-    start: Instant,
-    command_pool: vk::CommandPool,
     command_buffers: Vec<vk::CommandBuffer>,
     command_pools: Vec<vk::CommandPool>,
     present_mode: vk::PresentModeKHR,
@@ -80,10 +65,6 @@ impl From<vk::ErrorCode> for FrameError {
 }
 
 impl Vulkan {
-    pub(crate) fn device(&self) -> &Device {
-        &self.device
-    }
-
     pub unsafe fn create(window: &Window, present_mode: vk::PresentModeKHR) -> Self {
         info!("Loads Vulkan library");
         let loader = LibloadingLoader::new(LIBRARY).expect("Vulkan loader must be created");
@@ -172,7 +153,6 @@ impl Vulkan {
         );
         let render_pass = create_render_pass(&device, &swapchain);
         let framebuffers = create_framebuffers(&device, render_pass, &swapchain);
-        let command_pool = create_command_pool(&device, queues.graphics);
         let command_pools = create_command_pools(&device, queues.graphics, &swapchain);
         let command_buffers = create_command_buffers(&device, &command_pools);
         let sync = Sync::create(&device, &swapchain);
@@ -193,8 +173,6 @@ impl Vulkan {
             need_resize: false,
             programs: vec![],
             cameras: vec![],
-            start: Instant::now(),
-            command_pool,
             command_buffers,
             command_pools,
             chain: 0,

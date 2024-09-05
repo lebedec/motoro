@@ -8,7 +8,7 @@ use vulkanalia::vk::{
     DescriptorSetLayout, DescriptorType, DeviceV1_0, HasBuilder, InstanceV1_0, MemoryMapFlags,
     ShaderStageFlags, WriteDescriptorSet,
 };
-use vulkanalia::{vk, Device};
+use vulkanalia::{Device};
 
 /// Represents GLSL variable declared with the "uniform" storage qualifier.
 ///

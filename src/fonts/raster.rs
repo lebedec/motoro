@@ -1,7 +1,7 @@
 use crate::fonts::MISSING_CHAR;
 use crate::{Char, Font, FontError};
 use fontdue::FontSettings;
-use log::{error, info};
+use log::info;
 use std::collections::HashMap;
 use std::fs;
 use zune_png::zune_core::bit_depth::BitDepth;
@@ -11,7 +11,7 @@ use zune_png::PngEncoder;
 
 /// NOTE: Resolution scale here improves pixel perfect rendering of font. It can't improve
 /// letters spacing in result text rendering. See FontPrefab::layout for details.
-pub(crate) fn rasterize_font_to_image_file(
+pub fn rasterize_font_to_image_file(
     input: &[u8],
     cache: &str,
     name: &str,
@@ -46,7 +46,7 @@ pub(crate) fn rasterize_font_to_image_file(
     let mut charset = HashMap::new();
     let mut missing_char = Char::default();
     for char in alphabet.chars() {
-        let (mut glyph, bitmap) = font.rasterize(char, size);
+        let (glyph, bitmap) = font.rasterize(char, size);
         let step_x = round_up_pow_2(glyph.width);
         if offset_x + step_x >= w {
             offset_x = 0;
@@ -134,7 +134,7 @@ fn round_up_pow_2(value: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use crate::fonts::{ascii, cyrillic, rasterize_font_to_image_file};
+    use crate::fonts::{ascii, rasterize_font_to_image_file};
 
     #[test]
     pub fn test_builtin_font_rendering() {

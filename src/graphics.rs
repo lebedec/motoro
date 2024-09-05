@@ -1,11 +1,11 @@
 use crate::input::{poll_event, UserInput};
-use crate::math::VecComponents;
+
 use crate::textures::TextureLoader;
 use crate::vulkan::Vulkan;
-use crate::{dpi, Camera, Colors, FontLoader, FontLoaderHandle, GraphicsConfig, GraphicsMode};
+use crate::{dpi, Colors, FontLoader, FontLoaderHandle, GraphicsConfig, GraphicsMode};
 use log::info;
 use sdl2::event::Event;
-use sdl2::sys;
+
 use sdl2::video::{FullscreenType, Window, WindowPos};
 use std::fs::create_dir_all;
 use vulkanalia::vk;
@@ -63,7 +63,7 @@ impl Graphics {
         } else {
             vk::PresentModeKHR::IMMEDIATE
         };
-        let mut vulkan = unsafe { Vulkan::create(&window, present_mode) };
+        let vulkan = unsafe { Vulkan::create(&window, present_mode) };
         info!("Configures asset loaders");
         create_dir_all(&config.fonts.cache).expect("all cache sub directories must be created");
         let textures = vulkan.create_texture_loader_device();

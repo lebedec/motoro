@@ -3,9 +3,7 @@ use crate::vulkan::{
     MemoryBuffer, Vulkan,
 };
 use log::{error, info};
-use std::collections::HashSet;
 use std::marker::PhantomData;
-use std::sync::{OnceLock, RwLock};
 use vulkanalia::vk::{
     Buffer, BufferUsageFlags, CopyDescriptorSet, DescriptorBufferInfo, DescriptorSet,
     DescriptorSetLayout, DescriptorType, DeviceV1_0, HasBuilder, InstanceV1_0, MemoryMapFlags,
@@ -30,29 +28,6 @@ pub struct Storage<T> {
     collection: Vec<T>,
     cursor: usize,
     _phantom: PhantomData<T>,
-}
-
-fn get_errors_set() -> &'static mut Box<HashSet<String>> {
-    unsafe {
-        static mut SINGLETON: OnceLock<Box<HashSet<String>>> = OnceLock::new();
-        SINGLETON.get_or_init(|| Box::new(HashSet::new()));
-        SINGLETON.get_mut().expect("initialized")
-    }
-}
-
-macro_rules! error_once {
-    ($($arg:tt)*) => {{
-        let res = format!($($arg)*);
-        error_once_impl(res);
-    }}
-}
-
-fn error_once_impl(error: String) {
-    let errors = get_errors_set();
-    if !errors.contains(&error) {
-        error!("{}", error);
-        errors.insert(error);
-    }
 }
 
 impl<T: Default + Clone + Copy> Storage<T> {

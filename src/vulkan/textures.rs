@@ -2,8 +2,8 @@ use crate::textures::{read_texture_from_data, Texture, TextureError, TextureLoad
 use crate::vulkan::{
     command_once, create_buffer, create_image_view, get_memory_type_index, submit_commands,
 };
-use log::{debug, info};
-use std::fs;
+use log::{debug};
+
 use vulkanalia::vk::{CommandPool, DeviceV1_0, HasBuilder, InstanceV1_0, PhysicalDevice, Queue};
 use vulkanalia::{vk, Device, Instance};
 
@@ -35,7 +35,7 @@ impl VulkanTextureLoaderDevice {
 }
 
 impl TextureLoaderDevice for VulkanTextureLoaderDevice {
-    fn load_texture_from(&self, id: usize, data: &[u8]) -> Result<Texture, TextureError> {
+    fn load_texture_from(&self, _id: usize, data: &[u8]) -> Result<Texture, TextureError> {
         read_texture_from_data(data).and_then(|(image, data)| {
             let texture = unsafe {
                 create_texture(

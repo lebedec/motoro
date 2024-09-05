@@ -1,5 +1,5 @@
 pub use crate::colors::*;
-use crate::math::{Vec2, VecArith};
+
 pub use crate::textures::*;
 pub use crate::vulkan::program::*;
 pub use crate::vulkan::shaders::*;
