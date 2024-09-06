@@ -15,6 +15,7 @@ impl Graphics {
 
     pub fn camera(&mut self) -> Box<Camera> {
         let mut camera = Box::new(Camera::create(self));
+        camera.update(&self.vulkan);
         self.vulkan.register_camera(&mut camera);
         camera
     }

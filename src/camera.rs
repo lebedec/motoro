@@ -6,7 +6,6 @@ use crate::vulkan::Vulkan;
 use crate::{Graphics, UserInput};
 use sdl2::keyboard::Keycode;
 
-
 pub struct Camera {
     pub eye: Vec3,
     pub eye_target: Vec3,
@@ -36,7 +35,6 @@ impl Camera {
             proj: mat4_identity(),
             view: mat4_identity(),
         };
-        camera.update_screen(graphics.vulkan.swapchain_image_size());
         camera
     }
 
@@ -53,6 +51,9 @@ impl Camera {
 
     pub fn reference(mut self, resolution: Vec2u) -> Self {
         self.resolution_reference = Some(resolution);
+        if let Some(reference) = self.resolution_reference {
+            self.resolution_scale = self.screen.y() / reference.y() as f32;
+        }
         self
     }
 
