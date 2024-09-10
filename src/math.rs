@@ -270,17 +270,26 @@ pub trait VecNeighbors<T>
 where
     Self: Sized,
 {
-    fn circle(&self, radius: usize, grid: Self) -> Vec<Self>;
+    fn rectangle(&self, half_size: Vec2s, grid: Self) -> Vec<Self>;
+    fn around(&self, radius: usize, grid: Self) -> Vec<Self>;
     fn cross(&self, grid: Self) -> Vec<Self>;
 }
 
 impl VecNeighbors<usize> for Vec2s {
-    fn circle(&self, radius: usize, grid: Vec2s) -> Vec<Vec2s> {
+    fn rectangle(&self, half_size: Vec2s, grid: Self) -> Vec<Self> {
         let [cx, cy] = *self;
-        let min_y = if radius >= cy { 0 } else { cy - radius };
-        let max_y = (cy + radius + 1).min(grid.y());
-        let min_x = if radius >= cx { 0 } else { cx - radius };
-        let max_x = (cx + radius + 1).min(grid.x());
+        let min_y = if half_size.y() >= cy {
+            0
+        } else {
+            cy - half_size.y()
+        };
+        let max_y = (cy + half_size.y() + 1).min(grid.y());
+        let min_x = if half_size.x() >= cx {
+            0
+        } else {
+            cx - half_size.x()
+        };
+        let max_x = (cx + half_size.x() + 1).min(grid.x());
         let mut result = vec![];
         for y in min_y..max_y {
             for x in min_x..max_x {
@@ -288,6 +297,10 @@ impl VecNeighbors<usize> for Vec2s {
             }
         }
         result
+    }
+
+    fn around(&self, radius: usize, grid: Vec2s) -> Vec<Vec2s> {
+        self.rectangle([radius; 2], grid)
     }
 
     fn cross(&self, grid: Self) -> Vec<Self> {
@@ -313,11 +326,13 @@ pub trait VecSpace<T> {
     fn space(&self) -> T;
 
     fn contains(&self, target: Self) -> bool;
+
+    fn in_rect(&self, left_top: Self, size: Self) -> bool;
 }
 
 impl<T, const N: usize> VecSpace<T> for [T; N]
 where
-    T: Copy + Default + Mul<Output = T> + PartialOrd,
+    T: Copy + Default + Mul<Output = T> + Add<Output = T> + PartialOrd,
 {
     fn space(&self) -> T {
         let mut result = self[0];
@@ -330,6 +345,15 @@ where
     fn contains(&self, target: Self) -> bool {
         for i in 0..N {
             if target[i] < T::default() || target[i] >= self[i] {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn in_rect(&self, left_top: Self, size: Self) -> bool {
+        for i in 0..N {
+            if self[i] < left_top[i] || self[i] > left_top[i] + size[i] {
                 return false;
             }
         }

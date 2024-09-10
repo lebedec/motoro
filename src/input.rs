@@ -46,13 +46,13 @@ impl UserInput {
                 keycode: Some(keycode),
                 ..
             } => {
-                self.keys.down.insert(*keycode);
+                self.keys.down.push(*keycode);
             }
             Event::KeyUp {
                 keycode: Some(keycode),
                 ..
             } => {
-                self.keys.down.remove(keycode);
+                self.keys.down.retain(|down| down != keycode);
                 self.keys.pressed.insert(*keycode);
             }
             Event::MouseMotion { x, y, .. } => {
@@ -89,11 +89,25 @@ impl UserInput {
 
 #[derive(Debug, Default, Clone)]
 pub struct KeysInput {
-    pub down: HashSet<Keycode>,
+    pub down: Vec<Keycode>,
     pub pressed: HashSet<Keycode>,
 }
 
 impl KeysInput {
+    pub fn wasd_first_down(&self) -> Option<[f32; 2]> {
+        for keycode in &self.down {
+            let direction = match keycode {
+                Keycode::W => [0.0, -1.0],
+                Keycode::S => [0.0, 1.0],
+                Keycode::A => [-1.0, 0.0],
+                Keycode::D => [1.0, 0.0],
+                _ => continue,
+            };
+            return Some(direction);
+        }
+        None
+    }
+
     pub fn wasd_xy_direction(&self) -> [f32; 2] {
         let mut delta = [0.0, 0.0];
         if self.down.contains(&Keycode::W) {
