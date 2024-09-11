@@ -270,13 +270,13 @@ pub trait VecNeighbors<T>
 where
     Self: Sized,
 {
-    fn rectangle(&self, half_size: Vec2s, grid: Self) -> Vec<Self>;
-    fn around(&self, radius: usize, grid: Self) -> Vec<Self>;
+    fn rectangle(&self, half_size: Self, grid: Self) -> Vec<Self>;
+    fn around(&self, radius: T, grid: Self) -> Vec<Self>;
     fn cross(&self, grid: Self) -> Vec<Self>;
 }
 
 impl VecNeighbors<usize> for Vec2s {
-    fn rectangle(&self, half_size: Vec2s, grid: Self) -> Vec<Self> {
+    fn rectangle(&self, half_size: Self, grid: Self) -> Vec<Self> {
         let [cx, cy] = *self;
         let min_y = if half_size.y() >= cy {
             0
@@ -300,6 +300,53 @@ impl VecNeighbors<usize> for Vec2s {
     }
 
     fn around(&self, radius: usize, grid: Vec2s) -> Vec<Vec2s> {
+        self.rectangle([radius; 2], grid)
+    }
+
+    fn cross(&self, grid: Self) -> Vec<Self> {
+        let [x, y] = *self;
+        let mut result = vec![];
+        if x > 0 {
+            result.push([x - 1, y])
+        }
+        if y > 0 {
+            result.push([x, y - 1])
+        }
+        if x + 1 < grid.x() {
+            result.push([x + 1, y])
+        }
+        if y + 1 < grid.y() {
+            result.push([x, y + 1])
+        }
+        result
+    }
+}
+
+impl VecNeighbors<i32> for Vec2i {
+    fn rectangle(&self, half_size: Self, grid: Self) -> Vec<Self> {
+        let [cx, cy] = *self;
+        let min_y = if half_size.y() >= cy {
+            0
+        } else {
+            cy - half_size.y()
+        };
+        let max_y = (cy + half_size.y() + 1).min(grid.y());
+        let min_x = if half_size.x() >= cx {
+            0
+        } else {
+            cx - half_size.x()
+        };
+        let max_x = (cx + half_size.x() + 1).min(grid.x());
+        let mut result = vec![];
+        for y in min_y..max_y {
+            for x in min_x..max_x {
+                result.push([x, y])
+            }
+        }
+        result
+    }
+
+    fn around(&self, radius: i32, grid: Vec2i) -> Vec<Vec2i> {
         self.rectangle([radius; 2], grid)
     }
 
