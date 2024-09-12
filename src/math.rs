@@ -372,7 +372,7 @@ impl VecNeighbors<i32> for Vec2i {
 pub trait VecSpace<T> {
     fn space(&self) -> T;
 
-    fn contains(&self, target: Self) -> bool;
+    fn has(&self, target: Self) -> bool;
 
     fn in_rect(&self, left_top: Self, size: Self) -> bool;
 }
@@ -389,7 +389,7 @@ where
         result
     }
 
-    fn contains(&self, target: Self) -> bool {
+    fn has(&self, target: Self) -> bool {
         for i in 0..N {
             if target[i] < T::default() || target[i] >= self[i] {
                 return false;
