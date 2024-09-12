@@ -1,6 +1,6 @@
-use crate::math::{Vec2};
-pub use fontdue::layout::LayoutSettings;
+use crate::math::Vec2;
 use fontdue::layout::{CoordinateSystem, Layout, TextStyle};
+pub use fontdue::layout::{HorizontalAlign, LayoutSettings, VerticalAlign};
 use std::collections::HashMap;
 use std::io;
 
@@ -31,14 +31,11 @@ impl Font {
     /// NOTE: Resolution scale must be applied to layout coordinates for better kerning and spacing
     /// calculations in font engine. Result glyph x and y coordinates different depends on
     /// TextStyle size and layout settings. You can't just scale atlas texture with font letters!
-    pub fn layout(&self, text: &str, max_width: f32, line_height: f32) -> Vec<Char> {
+    pub fn layout(&self, text: &str, mut settings: LayoutSettings) -> Vec<Char> {
         let scale = self.resolution_scale;
         let mut layout = Layout::new(CoordinateSystem::PositiveYDown);
-        let settings = LayoutSettings {
-            max_width: Some(max_width * scale),
-            line_height,
-            ..LayoutSettings::default()
-        };
+        settings.max_width = settings.max_width.map(|width| width * scale);
+        settings.max_height = settings.max_height.map(|height| height * scale);
         layout.reset(&settings);
         let text = TextStyle::new(text, self.size, 0);
         let fonts = [&self.font];
