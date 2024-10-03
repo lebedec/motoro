@@ -273,9 +273,14 @@ where
     fn rectangle(&self, half_size: Self, grid: Self) -> Vec<Self>;
     fn around(&self, radius: T, grid: Self) -> Vec<Self>;
     fn cross(&self, grid: Self) -> Vec<Self>;
+    fn ring(&self, grid: Self, ra: T, rb: T) -> Vec<Self>;
 }
 
 impl VecNeighbors<usize> for Vec2s {
+    fn ring(&self, grid: Self, ra: usize, rb: usize) -> Vec<Self> {
+        unimplemented!()
+    }
+
     fn rectangle(&self, half_size: Self, grid: Self) -> Vec<Self> {
         let [cx, cy] = *self;
         let min_y = if half_size.y() >= cy {
@@ -323,6 +328,10 @@ impl VecNeighbors<usize> for Vec2s {
 }
 
 impl VecNeighbors<i32> for Vec2i {
+    fn ring(&self, grid: Self, ra: i32, rb: i32) -> Vec<Self> {
+        unimplemented!()
+    }
+
     fn rectangle(&self, half_size: Self, grid: Self) -> Vec<Self> {
         let [cx, cy] = *self;
         let min_y = if half_size.y() >= cy {
