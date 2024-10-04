@@ -1,6 +1,6 @@
 use std::backtrace::Backtrace;
 use std::env;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::ops::Deref;
 use std::time::Instant;
@@ -90,7 +90,6 @@ fn serve_prometheus_metrics(host: Option<String>) {
             info!("Starts monitoring endpoint at {host}");
             let listener = TcpListener::bind(host).expect("listener must be bound");
             for stream in listener.incoming() {
-                let mut stream = stream.unwrap();
                 let status = "HTTP/1.1 200 OK";
                 let contents = {
                     // NOTE: minimize lock in scope
@@ -101,9 +100,13 @@ fn serve_prometheus_metrics(host: Option<String>) {
                 };
                 let len = contents.len();
                 let response = format!("{status}\r\nContent-Length: {len}\r\n\r\n{contents}");
+                let mut stream = stream.unwrap();
+                let mut http_request = [0; 1024];
+                stream.read(&mut http_request).expect("http request read");
                 stream
                     .write_all(response.as_bytes())
                     .expect("metrics response must be written");
+                stream.flush().expect("metrics stream must be flushed");
             }
         }
     }
