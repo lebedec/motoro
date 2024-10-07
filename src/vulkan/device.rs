@@ -32,24 +32,35 @@ pub unsafe fn create_logical_device(
         info!("Enables device validation layer");
         layers.push(VALIDATION_LAYER.as_ptr());
     }
-    let extensions = platform_device_extensions();
+    info!("Extensions: {:?}", DEVICE_EXTENSIONS);
 
     // see vulkanalia chain.rs for details about pointer chain push_next
     let mut indexing = vk::PhysicalDeviceDescriptorIndexingFeatures::default();
     let mut features2 = vk::PhysicalDeviceFeatures2::builder().push_next(&mut indexing);
     instance.get_physical_device_features2(physical_device, &mut features2);
-
     info!(
-        "Sampled image array non uniform indexing: {}",
+        "shaderSampledImageArrayNonUniformIndexing: {}",
         indexing.shader_sampled_image_array_non_uniform_indexing
     );
     info!(
-        "Sampled image update after bind: {}",
+        "descriptorBindingSampledImageUpdateAfterBind: {}",
         indexing.descriptor_binding_sampled_image_update_after_bind
     );
     info!(
-        "Sampled image update after bind: {}",
-        indexing.descriptor_binding_sampled_image_update_after_bind
+        "shaderUniformBufferArrayNonUniformIndexing: {}",
+        indexing.shader_uniform_buffer_array_non_uniform_indexing
+    );
+    info!(
+        "descriptorBindingUniformBufferUpdateAfterBind: {}",
+        indexing.descriptor_binding_uniform_buffer_update_after_bind,
+    );
+    info!(
+        "shaderStorageBufferArrayNonUniformIndexing: {}",
+        indexing.shader_storage_buffer_array_non_uniform_indexing
+    );
+    info!(
+        "descriptorBindingStorageBufferUpdateAfterBind: {}",
+        indexing.descriptor_binding_storage_buffer_update_after_bind,
     );
     info!(
         "Runtime descriptor array: {}",
@@ -102,6 +113,10 @@ pub unsafe fn create_logical_device(
         .sampler_anisotropy(true)
         .fill_mode_non_solid(true);
 
+    let extensions = DEVICE_EXTENSIONS
+        .iter()
+        .map(|e| e.as_ptr())
+        .collect::<Vec<_>>();
     let info = vk::DeviceCreateInfo::builder()
         .queue_create_infos(&queue_infos)
         .enabled_layer_names(&layers)
@@ -113,16 +128,4 @@ pub unsafe fn create_logical_device(
     instance
         .create_device(physical_device, &info, None)
         .expect("Vulkan device must be created")
-}
-
-fn platform_device_extensions() -> Vec<*const c_char> {
-    let mut extensions: Vec<_> = DEVICE_EXTENSIONS.iter().map(|n| n.as_ptr()).collect();
-    if cfg!(target_os = "macos") {
-        // Required by Vulkan SDK on macOS since 1.3.216.
-        // NOTE: deprecated provisional feature
-        extensions.push(vk::KHR_PORTABILITY_SUBSET_EXTENSION.name.as_ptr());
-        extensions.push(vk::KHR_MAINTENANCE3_EXTENSION.name.as_ptr());
-    }
-    // extensions.push(vk::EXT_DESCRIPTOR_INDEXING_EXTENSION.name.as_ptr());
-    extensions
 }

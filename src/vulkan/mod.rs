@@ -93,7 +93,7 @@ impl Vulkan {
             .map(|name| name.as_ptr() as *const _)
             .collect();
         let mut flags = vk::InstanceCreateFlags::empty();
-        if cfg!(target_os = "macos") && version >= Version::new(1, 3, 216) {
+        if version >= Version::new(1, 3, 216) {
             info!("Enables extensions for macOS portability");
             extensions.push(
                 vk::KHR_GET_PHYSICAL_DEVICE_PROPERTIES2_EXTENSION
@@ -668,8 +668,13 @@ impl Sync {
     // }
 }
 
+// if cfg!(target_os = "macos") {
+// Required by Vulkan SDK on macOS since 1.3.216.
+// NOTE: deprecated provisional feature
+// extensions.push(vk::KHR_PORTABILITY_SUBSET_EXTENSION.name.as_ptr());
 const DEVICE_EXTENSIONS: &[vk::ExtensionName] = &[
     vk::KHR_SWAPCHAIN_EXTENSION.name,
+    vk::KHR_MAINTENANCE3_EXTENSION.name,
     vk::EXT_DESCRIPTOR_INDEXING_EXTENSION.name,
 ];
 

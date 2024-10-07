@@ -2,13 +2,15 @@ use crate::vulkan::{
     create_buffers, create_descriptor_pool, create_descriptor_set_layout, create_descriptors,
     MemoryBuffer, Vulkan,
 };
+use log::info;
+use std::any::type_name;
 use std::marker::PhantomData;
 use vulkanalia::vk::{
     Buffer, BufferUsageFlags, CopyDescriptorSet, DescriptorBufferInfo, DescriptorSet,
     DescriptorSetLayout, DescriptorType, DeviceV1_0, HasBuilder, InstanceV1_0, MemoryMapFlags,
     ShaderStageFlags, WriteDescriptorSet,
 };
-use vulkanalia::{Device};
+use vulkanalia::Device;
 
 /// Represents GLSL variable declared with the "uniform" storage qualifier.
 ///
@@ -39,6 +41,10 @@ impl<T> Uniform<T> {
     }
 
     pub unsafe fn create(slot: u32, binding: u32, vulkan: &Vulkan) -> Uniform<T> {
+        info!(
+            "Creates uniform<{}>, layout(set = {slot}, binding = {binding})",
+            type_name::<T>()
+        );
         let device = &vulkan.device;
         let frames = vulkan.swapchain.images.len();
         let bindings = vec![(
@@ -58,7 +64,7 @@ impl<T> Uniform<T> {
             device,
             frames,
             physical_device_memory,
-            std::mem::size_of::<T>(),
+            size_of::<T>(),
         );
         let uniform = Uniform {
             slot,
@@ -82,7 +88,7 @@ impl<T> Uniform<T> {
                 .map_memory(
                     self.buffers[frame].memory,
                     0,
-                    std::mem::size_of::<T>() as u64,
+                    size_of::<T>() as u64,
                     MemoryMapFlags::empty(),
                 )
                 .expect("memory must be mapped");
@@ -95,7 +101,7 @@ impl<T> Uniform<T> {
         let info = DescriptorBufferInfo::builder()
             .buffer(buffer)
             .offset(0)
-            .range(std::mem::size_of::<T>() as u64);
+            .range(size_of::<T>() as u64);
         let buffer_info = &[info];
         let buffer_write = WriteDescriptorSet::builder()
             .dst_set(self.sets[frame])

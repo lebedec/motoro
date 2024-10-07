@@ -3,6 +3,7 @@ use crate::vulkan::{
     MemoryBuffer, Vulkan,
 };
 use log::{error, info};
+use std::any::type_name;
 use std::marker::PhantomData;
 use vulkanalia::vk::{
     Buffer, BufferUsageFlags, CopyDescriptorSet, DescriptorBufferInfo, DescriptorSet,
@@ -40,6 +41,10 @@ impl<T: Default + Clone + Copy> Storage<T> {
     }
 
     pub unsafe fn create_many(slot: u32, binding: u32, vulkan: &Vulkan, n: usize) -> Self {
+        info!(
+            "Creates storage<{}>, layout(set = {slot}, binding = {binding})",
+            type_name::<T>()
+        );
         let device = &vulkan.device;
         let frames = vulkan.swapchain.images.len();
         let bindings = vec![(
@@ -54,18 +59,14 @@ impl<T: Default + Clone + Copy> Storage<T> {
         let physical_device_memory = vulkan
             .instance
             .get_physical_device_memory_properties(vulkan.physical_device);
-        info!(
-            "Creates storage buffers n={} size={} mem={}",
-            n,
-            std::mem::size_of::<T>(),
-            n * std::mem::size_of::<T>()
-        );
+        let size = size_of::<T>();
+        info!("Creates storage buffers n={n} size={size} mem={}", n * size);
         let buffers = create_buffers(
             BufferUsageFlags::STORAGE_BUFFER,
             device,
             frames,
             physical_device_memory,
-            n * std::mem::size_of::<T>(),
+            n * size,
         );
         let storage = Self {
             slot,
@@ -130,7 +131,7 @@ impl<T: Default + Clone + Copy> Storage<T> {
                 .map_memory(
                     self.buffers[frame].memory,
                     0,
-                    (value.len() * std::mem::size_of::<T>()) as u64,
+                    (value.len() * size_of::<T>()) as u64,
                     MemoryMapFlags::empty(),
                 )
                 .expect("memory must be mapped");
@@ -143,7 +144,7 @@ impl<T: Default + Clone + Copy> Storage<T> {
         let info = DescriptorBufferInfo::builder()
             .buffer(buffer)
             .offset(0)
-            .range(n as u64 * std::mem::size_of::<T>() as u64);
+            .range(n as u64 * size_of::<T>() as u64);
         let buffer_info = &[info];
         let buffer_write = WriteDescriptorSet::builder()
             .dst_set(self.sets[frame])
