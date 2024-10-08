@@ -1,7 +1,7 @@
 use crate::fonts::MISSING_CHAR;
 use crate::{Char, Font, FontError};
 use fontdue::FontSettings;
-use log::info;
+use log::{error, info};
 use std::collections::HashMap;
 use std::fs;
 use zune_png::zune_core::bit_depth::BitDepth;
@@ -52,12 +52,23 @@ pub fn rasterize_font_to_image_file(
             offset_x = 0;
             offset_y += step_y;
         }
+        let additional_y = (glyph.height as f32 - baseline);
         // println!(
         //     "CHAR[{char}] gh {} ymin {} baseline {baseline} lh {line_height} sub{} {line_metrics:?}",
         //     glyph.height, glyph.ymin, (glyph.height as i32 + glyph.ymin)
         // );
         if glyph.height > line_height as usize {
-            // error!("unable to render glyph [{char}], height greater than line height");
+            error!(
+                "unable to render glyph [{}], height greater than line height",
+                char
+            );
+            continue;
+        }
+        if (glyph.height as i32 + glyph.ymin) > baseline as i32 {
+            error!(
+                "unable to render glyph [{}], height greater than baseline, but ymin not enough",
+                char
+            );
             continue;
         }
         let glyph_offset = (baseline as i32 - (glyph.height as i32 + glyph.ymin)) as usize;

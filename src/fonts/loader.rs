@@ -40,6 +40,9 @@ pub struct FontLoader {
     cache: String,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct FontIndex(usize);
+
 impl FontLoader {
     pub fn new(cache: &str, resolution_scale: f32) -> FontLoaderHandle {
         info!("Creates font loader");
@@ -102,7 +105,7 @@ impl FontLoader {
         Ok(&self.registry[self.registry.len() - 1].font)
     }
 
-    pub fn match_font(&self, family: &str, weight: u16, style: &str, size: f32) -> &Font {
+    pub fn match_font(&self, family: &str, weight: u16, style: &str, size: f32) -> FontIndex {
         let mut best = 0;
         let mut best_diff = f32::INFINITY;
         for (index, record) in self.registry.iter().enumerate() {
@@ -117,7 +120,12 @@ impl FontLoader {
                 }
             }
         }
-        &self.registry[best].font
+        FontIndex(best)
+    }
+
+    #[inline(always)]
+    pub fn get_font(&self, index: FontIndex) -> &Font {
+        &self.registry[index.0].font
     }
 }
 
