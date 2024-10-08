@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::env;
-use std::ffi::c_char;
 
 use log::info;
 use vulkanalia::vk::{HasBuilder, InstanceV1_0, InstanceV1_1};

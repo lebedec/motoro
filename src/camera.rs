@@ -22,7 +22,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn create(graphics: &Graphics) -> Self {
-        let mut camera = Self {
+        let camera = Self {
             eye: [0.0; 3],
             eye_target: [0.0; 3],
             resolution_scale: 1.0,

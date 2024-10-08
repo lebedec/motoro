@@ -52,7 +52,7 @@ pub fn rasterize_font_to_image_file(
             offset_x = 0;
             offset_y += step_y;
         }
-        let additional_y = (glyph.height as f32 - baseline);
+        let additional_y = glyph.height as f32 - baseline;
         // println!(
         //     "CHAR[{char}] gh {} ymin {} baseline {baseline} lh {line_height} sub{} {line_metrics:?}",
         //     glyph.height, glyph.ymin, (glyph.height as i32 + glyph.ymin)
