@@ -94,6 +94,15 @@ pub struct KeysInput {
 }
 
 impl KeysInput {
+    pub fn down(&self, keys: &[Keycode]) -> bool {
+        for key in keys {
+            if self.down.contains(key) {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn wasd_first_down(&self) -> Option<[f32; 2]> {
         for keycode in &self.down {
             let direction = match keycode {
