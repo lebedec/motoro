@@ -1,8 +1,10 @@
 use crate::textures::{read_texture_from_data, Texture, TextureError, TextureLoaderDevice};
 use crate::vulkan::{
     command_once, create_buffer, create_image_view, get_memory_type_index, submit_commands,
+    MemoryBuffer,
 };
-use log::{debug};
+use log::debug;
+use std::time::Instant;
 
 use vulkanalia::vk::{CommandPool, DeviceV1_0, HasBuilder, InstanceV1_0, PhysicalDevice, Queue};
 use vulkanalia::{vk, Device, Instance};
@@ -17,6 +19,39 @@ pub struct VulkanTextureLoaderDevice {
 }
 
 impl VulkanTextureLoaderDevice {
+    pub fn update_texture_data(&self, texture: Texture, data: &[u8]) {
+        unsafe {
+            let format = vk::Format::R8G8B8A8_UNORM;
+            update_image(
+                &self.instance,
+                &self.device,
+                self.physical_device,
+                self.queue,
+                self.command_pool,
+                texture,
+                format,
+                data,
+            )
+        }
+    }
+
+    pub fn create_texture_handle(&self, width: usize, height: usize) -> Texture {
+        unsafe {
+            let format = vk::Format::R8G8B8A8_UNORM;
+            create_image(
+                &self.instance,
+                &self.device,
+                self.physical_device,
+                width as u32,
+                height as u32,
+                format,
+                vk::ImageTiling::LINEAR,
+                vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::TRANSFER_DST,
+                vk::MemoryPropertyFlags::DEVICE_LOCAL,
+            )
+        }
+    }
+
     pub fn create_texture(&self, width: u32, height: u32, data: &[u8]) -> Texture {
         let texture = unsafe {
             create_texture(
@@ -35,7 +70,7 @@ impl VulkanTextureLoaderDevice {
 }
 
 impl TextureLoaderDevice for VulkanTextureLoaderDevice {
-    fn load_texture_from(&self, _id: usize, data: &[u8]) -> Result<Texture, TextureError> {
+    fn load_texture_from(&self, data: &[u8]) -> Result<Texture, TextureError> {
         read_texture_from_data(data).and_then(|(image, data)| {
             let texture = unsafe {
                 create_texture(
@@ -52,6 +87,69 @@ impl TextureLoaderDevice for VulkanTextureLoaderDevice {
             Ok(texture)
         })
     }
+}
+
+unsafe fn update_image(
+    instance: &Instance,
+    device: &Device,
+    physical_device: vk::PhysicalDevice,
+    queue: vk::Queue,
+    command_pool: vk::CommandPool,
+    texture: Texture,
+    format: vk::Format,
+    data: &[u8],
+) {
+    let t = Instant::now();
+    let [width, height] = texture.size;
+    let size = data.len() as u64;
+    let physical_device_memory = instance.get_physical_device_memory_properties(physical_device);
+    let staging = create_buffer(
+        device,
+        size,
+        vk::BufferUsageFlags::TRANSFER_SRC,
+        vk::MemoryPropertyFlags::HOST_COHERENT | vk::MemoryPropertyFlags::HOST_VISIBLE,
+        physical_device_memory,
+    );
+    let t0 = t.elapsed();
+    let t = Instant::now();
+    staging.update(device, data);
+    let t1 = t.elapsed();
+    let t = Instant::now();
+    transition_image_layout(
+        device,
+        queue,
+        command_pool,
+        texture.image,
+        vk::ImageLayout::UNDEFINED,
+        vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+    );
+    let t2 = t.elapsed();
+    let t = Instant::now();
+    copy_buffer_to_image(
+        device,
+        queue,
+        command_pool,
+        staging.handle,
+        texture.image,
+        width,
+        height,
+    );
+    let t3 = t.elapsed();
+    let t = Instant::now();
+    transition_image_layout(
+        device,
+        queue,
+        command_pool,
+        texture.image,
+        vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+        vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
+    );
+    let t4 = t.elapsed();
+    device.destroy_buffer(staging.handle, None);
+    device.free_memory(staging.memory, None);
+    // println!(
+    //     "create_buffer {t0:?}, update {t1:?}, trans1 {t2:?}, copy_buffer {t3:?}, trans2 {t4:?} {texture:?}"
+    // );
 }
 
 unsafe fn create_texture(
@@ -96,7 +194,6 @@ unsafe fn create_texture(
         queue,
         command_pool,
         texture.image,
-        format,
         vk::ImageLayout::UNDEFINED,
         vk::ImageLayout::TRANSFER_DST_OPTIMAL,
     );
@@ -114,7 +211,6 @@ unsafe fn create_texture(
         queue,
         command_pool,
         texture.image,
-        format,
         vk::ImageLayout::TRANSFER_DST_OPTIMAL,
         vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
     );
@@ -178,7 +274,6 @@ unsafe fn transition_image_layout(
     queue: vk::Queue,
     pool: vk::CommandPool,
     image: vk::Image,
-    _format: vk::Format,
     old_layout: vk::ImageLayout,
     new_layout: vk::ImageLayout,
 ) {

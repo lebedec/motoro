@@ -1,6 +1,5 @@
 use std::io;
 
-
 use vulkanalia::vk::DeviceV1_0;
 use vulkanalia::{vk, Device};
 use zune_png::error::PngDecodeErrors;
@@ -15,8 +14,8 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub const FALLBACK: &'static str = "<fallback>";
-    pub const BLANK: &'static str = "<blank>";
+    pub const FALLBACK: &'static str = "memory:fallback";
+    pub const BLANK: &'static str = "memory:blank";
 }
 
 #[derive(Debug)]

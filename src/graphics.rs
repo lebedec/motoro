@@ -1,6 +1,6 @@
 use crate::input::{poll_event, UserInput};
 
-use crate::textures::TextureLoader;
+use crate::textures::TexturesManager;
 use crate::vulkan::Vulkan;
 use crate::{dpi, Colors, FontLoader, FontLoaderHandle, GraphicsConfig, GraphicsMode};
 use log::info;
@@ -14,7 +14,7 @@ use vulkanalia::vk;
 pub struct Graphics {
     pub(crate) window: Window,
     pub(crate) vulkan: Vulkan,
-    pub textures: TextureLoader,
+    pub textures: TexturesManager,
     pub fonts: FontLoaderHandle,
     pub input: UserInput,
 }
@@ -67,7 +67,7 @@ impl Graphics {
         info!("Configures asset loaders");
         create_dir_all(&config.fonts.cache).expect("all cache sub directories must be created");
         let textures = vulkan.create_texture_loader_device();
-        let textures = TextureLoader::new(textures);
+        let textures = TexturesManager::new(textures);
         let fonts_resolution_scale = match config.fonts.resolution_reference {
             None => 1.0,
             Some([_, height]) => drawable.1 as f32 / height as f32,

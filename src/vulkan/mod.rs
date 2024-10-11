@@ -37,7 +37,7 @@ pub struct Vulkan {
     pub(crate) physical_device: vk::PhysicalDevice,
     pub(crate) device: Device,
     queues: QueueFamilyIndex,
-    queue: vk::Queue,
+    pub(crate) queue: vk::Queue,
     present_queue: vk::Queue,
     surface: vk::SurfaceKHR,
     pub(crate) swapchain: Swapchain,
@@ -48,8 +48,8 @@ pub struct Vulkan {
     need_resize: bool,
     programs: Vec<AtomicPtr<Program>>,
     cameras: Vec<AtomicPtr<Camera>>,
-    command_buffers: Vec<vk::CommandBuffer>,
-    command_pools: Vec<vk::CommandPool>,
+    pub(crate) command_buffers: Vec<vk::CommandBuffer>,
+    pub(crate) command_pools: Vec<vk::CommandPool>,
     present_mode: vk::PresentModeKHR,
 }
 
