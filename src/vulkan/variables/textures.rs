@@ -1,4 +1,4 @@
-use crate::Texture;
+use crate::{Texture, Variable};
 use log::info;
 use vulkanalia::vk::{
     DescriptorPoolCreateFlags, DescriptorSet, DescriptorSetLayout, DescriptorSetLayoutCreateFlags,

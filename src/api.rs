@@ -9,10 +9,6 @@ use vulkanalia::vk;
 use vulkanalia::vk::{DeviceV1_0, HasBuilder, PipelineVertexInputStateCreateInfo};
 
 impl Graphics {
-    pub fn create_sampler(&self) -> ImageSampler {
-        ImageSampler::create(&self.vulkan.device, 100)
-    }
-
     pub fn camera(&mut self) -> Box<Camera> {
         let mut camera = Box::new(Camera::create(self));
         camera.update(&self.vulkan);
@@ -20,7 +16,7 @@ impl Graphics {
         camera
     }
 
-    pub fn sampler(&self, slot: u32, binding: u32) -> Textures {
+    pub fn textures(&self, slot: u32, binding: u32) -> Textures {
         Textures::create(slot, binding, &self.vulkan.device)
     }
 
@@ -28,11 +24,11 @@ impl Graphics {
         unsafe { Uniform::create(slot, binding, &self.vulkan) }
     }
 
-    pub fn storage<T>(&self, slot: u32, binding: u32, n: usize) -> Storage<T>
+    pub fn storage<T>(&self, n: usize) -> Storage<T>
     where
         T: Default + Clone + Copy,
     {
-        unsafe { Storage::create_many(slot, binding, &self.vulkan, n) }
+        unsafe { Storage::create(&self.vulkan, n) }
     }
 
     pub fn mesh(&self, n: usize) -> Mesh {
@@ -97,7 +93,7 @@ impl Graphics {
         program
     }
 
-    pub fn chain(&self) -> usize {
+    pub fn frame(&self) -> usize {
         self.vulkan.chain
     }
 

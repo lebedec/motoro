@@ -1,5 +1,5 @@
 use crate::vulkan::{create_pipeline, Swapchain};
-use crate::{Mesh, Shader, Storage, Textures, Uniform, Vertices};
+use crate::{Mesh, Shader, Storage, Textures, Uniform, Variable, Vertices};
 use log::info;
 use vulkanalia::vk::{DeviceV1_0, Handle, HasBuilder, PipelineVertexInputStateCreateInfo};
 use vulkanalia::{vk, Device};
@@ -100,14 +100,11 @@ impl Program {
         }
     }
 
-    pub fn bind_uniform<T>(&self, variable: &Uniform<T>) {
-        self.bind_descriptor(variable.slot, variable.descriptor(self.current_frame));
+    pub fn bind_variable(&self, variable: &Variable) {
+        self.bind_descriptor(variable.set, variable.descriptor(self.current_frame));
     }
 
-    pub fn bind_storage<T>(&self, variable: &Storage<T>)
-    where
-        T: Default + Clone + Copy,
-    {
+    pub fn bind_uniform<T>(&self, variable: &Uniform<T>) {
         self.bind_descriptor(variable.slot, variable.descriptor(self.current_frame));
     }
 

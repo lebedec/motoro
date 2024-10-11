@@ -2,6 +2,7 @@ use crate::vulkan::{
     create_buffers, create_descriptor_pool, create_descriptor_set_layout, create_descriptors,
     MemoryBuffer, Vulkan,
 };
+use crate::Variable;
 use log::{error, info};
 use std::any::type_name;
 use std::marker::PhantomData;
@@ -10,7 +11,7 @@ use vulkanalia::vk::{
     DescriptorSetLayout, DescriptorType, DeviceV1_0, HasBuilder, InstanceV1_0, MemoryMapFlags,
     ShaderStageFlags, WriteDescriptorSet,
 };
-use vulkanalia::Device;
+use vulkanalia::{vk, Device};
 
 /// Represents GLSL variable declared as storage buffer.
 ///
@@ -20,69 +21,37 @@ use vulkanalia::Device;
 /// } canvas;
 /// ```
 pub struct Storage<T> {
-    pub(crate) slot: u32,
-    pub(crate) binding: u32,
-    layout: DescriptorSetLayout,
-    sets: Vec<DescriptorSet>,
-    buffers: Vec<MemoryBuffer>,
+    pub(crate) buffers: Vec<MemoryBuffer>,
+    pub(crate) range: u64,
     device: Device,
     collection: Vec<T>,
     cursor: usize,
-    _phantom: PhantomData<T>,
 }
 
 impl<T: Default + Clone + Copy> Storage<T> {
-    pub fn layout(&self) -> DescriptorSetLayout {
-        self.layout
-    }
-
-    pub fn descriptor(&self, frame: usize) -> DescriptorSet {
-        self.sets[frame]
-    }
-
-    pub unsafe fn create_many(slot: u32, binding: u32, vulkan: &Vulkan, n: usize) -> Self {
-        info!(
-            "Creates storage<{}>, layout(set = {slot}, binding = {binding})",
-            type_name::<T>()
-        );
+    pub unsafe fn create(vulkan: &Vulkan, n: usize) -> Self {
         let device = &vulkan.device;
         let frames = vulkan.swapchain.images.len();
-        let bindings = vec![(
-            binding,
-            DescriptorType::STORAGE_BUFFER,
-            ShaderStageFlags::FRAGMENT | ShaderStageFlags::VERTEX,
-            1,
-        )];
-        let pool = create_descriptor_pool(device, &bindings, frames);
-        let layout = create_descriptor_set_layout(device, bindings);
-        let sets = create_descriptors(device, pool, layout, frames);
         let physical_device_memory = vulkan
             .instance
             .get_physical_device_memory_properties(vulkan.physical_device);
         let size = size_of::<T>();
-        info!("Creates storage buffers n={n} size={size} mem={}", n * size);
+        let range = size * n;
+        info!("Creates storage buffers n={n} size={size} range={range}");
         let buffers = create_buffers(
             BufferUsageFlags::STORAGE_BUFFER,
             device,
             frames,
             physical_device_memory,
-            n * size,
+            range,
         );
-        let storage = Self {
-            slot,
-            binding,
-            layout,
-            sets,
+        Self {
             buffers,
             device: device.clone(),
-            _phantom: Default::default(),
             collection: vec![T::default(); n],
             cursor: 0,
-        };
-        for i in 0..frames {
-            storage.write(i, storage.buffers[i].handle, n);
+            range: range as u64,
         }
-        storage
     }
 
     pub fn push(&mut self, value: T) -> u32 {
@@ -140,21 +109,46 @@ impl<T: Default + Clone + Copy> Storage<T> {
         }
     }
 
-    fn write(&self, frame: usize, buffer: Buffer, n: usize) {
+    pub fn layout(&self, set: u32, binding: u32) -> Variable {
+        let device = &self.device;
+        let frames = self.buffers.len();
+        unsafe {
+            let bindings = vec![(
+                binding,
+                DescriptorType::STORAGE_BUFFER,
+                ShaderStageFlags::FRAGMENT | ShaderStageFlags::VERTEX,
+                1,
+            )];
+            let pool = create_descriptor_pool(device, &bindings, frames);
+            let layout = create_descriptor_set_layout(device, bindings);
+            let descriptors = create_descriptors(device, pool, layout, frames);
+            let variable = Variable {
+                set,
+                binding,
+                layout,
+                descriptors,
+            };
+            for frame in 0..frames {
+                self.write(device, frame, &variable);
+            }
+            variable
+        }
+    }
+
+    fn write(&self, device: &Device, frame: usize, variable: &Variable) {
         let info = DescriptorBufferInfo::builder()
-            .buffer(buffer)
+            .buffer(self.buffers[frame].handle)
             .offset(0)
-            .range(n as u64 * size_of::<T>() as u64);
+            .range(self.range);
         let buffer_info = &[info];
         let buffer_write = WriteDescriptorSet::builder()
-            .dst_set(self.sets[frame])
-            .dst_binding(self.binding)
+            .dst_set(variable.descriptors[frame])
+            .dst_binding(variable.binding)
             .dst_array_element(0)
             .descriptor_type(DescriptorType::STORAGE_BUFFER)
             .buffer_info(buffer_info);
         unsafe {
-            self.device
-                .update_descriptor_sets(&[buffer_write], &[] as &[CopyDescriptorSet]);
+            device.update_descriptor_sets(&[buffer_write], &[] as &[CopyDescriptorSet]);
         }
     }
 }
