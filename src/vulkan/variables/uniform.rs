@@ -50,7 +50,7 @@ impl<T> Uniform<T> {
         let bindings = vec![(
             binding,
             DescriptorType::UNIFORM_BUFFER,
-            ShaderStageFlags::VERTEX,
+            ShaderStageFlags::VERTEX | ShaderStageFlags::FRAGMENT,
             1,
         )];
         let pool = create_descriptor_pool(device, &bindings, frames);
