@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct UserInput {
+    pub counter: usize,
     pub mouse: MouseInput,
     pub keys: KeysInput,
     pub events: Vec<Event>,
@@ -20,6 +21,7 @@ pub struct UserInput {
 impl Default for UserInput {
     fn default() -> Self {
         Self {
+            counter: 0,
             mouse: MouseInput::default(),
             keys: KeysInput::default(),
             events: vec![],
@@ -31,6 +33,7 @@ impl Default for UserInput {
 
 impl UserInput {
     pub(crate) fn clear(&mut self) {
+        self.counter += 1;
         self.time = self.timestamp.elapsed();
         self.timestamp = Instant::now();
         self.mouse.left.click = false;
